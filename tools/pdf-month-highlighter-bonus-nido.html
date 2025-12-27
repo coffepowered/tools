@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Month Highlighter</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --accent: #38bdf8;
+      --muted: #cbd5e1;
+      --text: #e2e8f0;
+      --error: #f87171;
+      --success: #4ade80;
+      --mono: "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+      --rounded: 14px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.15), transparent 35%),
+                  radial-gradient(circle at 80% 10%, rgba(74, 222, 128, 0.12), transparent 30%),
+                  linear-gradient(135deg, #0b1224, #0f172a 55%, #0b1224);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      padding: 32px 16px 48px;
+    }
+    .shell {
+      width: min(980px, 100%);
+      background: var(--panel);
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      border-radius: 18px;
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.35), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+      overflow: hidden;
+    }
+    header {
+      padding: 20px 24px 12px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0.4px;
+    }
+    p.lead {
+      margin: 6px 0 0;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 14px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 18px;
+      padding: 20px 24px;
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+    .field {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: var(--rounded);
+      padding: 12px 14px;
+      color: var(--text);
+      width: 100%;
+      font-size: 15px;
+      outline: none;
+      transition: border 0.15s ease, box-shadow 0.15s ease;
+    }
+    .field:focus {
+      border-color: rgba(56, 189, 248, 0.6);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18);
+    }
+    .files {
+      display: grid;
+      gap: 12px;
+    }
+    .drop-zone {
+      border: 1px dashed rgba(148, 163, 184, 0.3);
+      border-radius: var(--rounded);
+      padding: 16px 14px;
+      background: rgba(255, 255, 255, 0.02);
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      transition: border 0.15s ease, background 0.15s ease;
+      cursor: pointer;
+    }
+    .drop-zone strong {
+      display: block;
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+    .drop-zone span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .drop-zone .badge {
+      padding: 8px 12px;
+      border-radius: 12px;
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .drop-zone.is-dragging {
+      border-color: rgba(56, 189, 248, 0.7);
+      background: rgba(56, 189, 248, 0.08);
+    }
+    .file-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: var(--rounded);
+      padding: 12px 14px;
+    }
+    .file-name {
+      margin-top: 6px;
+      font-size: 13px;
+      color: var(--muted);
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+    }
+    .muted {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+    .actions {
+      padding: 0 24px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .option-row {
+      padding: 0 24px;
+      margin-top: -6px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .option-row input {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: var(--accent);
+    }
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      color: #0b1224;
+      background: linear-gradient(135deg, #38bdf8, #22d3ee);
+      box-shadow: 0 18px 30px rgba(34, 211, 238, 0.25);
+      transition: transform 0.12s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    button:not(:disabled):active {
+      transform: translateY(1px);
+      box-shadow: 0 10px 20px rgba(34, 211, 238, 0.18);
+    }
+    .status {
+      margin: 0 24px 22px;
+      padding: 14px 16px;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      border-radius: 14px;
+      font-family: var(--mono);
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+      min-height: 78px;
+      white-space: pre-wrap;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      font-size: 13px;
+      color: var(--muted);
+    }
+    a {
+      color: var(--accent);
+    }
+    footer {
+      padding: 0 24px 18px;
+      color: var(--muted);
+      font-size: 13px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <h1>PDF Month Highlighter</h1>
+      <p class="lead">
+        Merges the first page of up to three PDFs, detects the month in your date string,
+        highlights dates and month names, then lets you download the stitched PDF.
+      </p>
+    </header>
+
+    <div class="grid">
+      <div>
+        <label for="date">Date string</label>
+        <input class="field" id="date" type="text" placeholder="e.g. 01/01/2025 or 2025-01-01" autocomplete="off">
+        <div class="muted">Any format containing the month works (dd/mm/yyyy, mm/dd/yyyy, yyyy/mm/dd).</div>
+      </div>
+      <div>
+        <label for="output">Output filename</label>
+        <input class="field" id="output" type="text" value="output.pdf">
+        <div class="muted">Defaults to output.pdf</div>
+      </div>
+    </div>
+
+    <div class="option-row">
+      <input type="checkbox" id="includeAllPages" checked>
+      <label for="includeAllPages">Include all pages from each PDF (default). Uncheck to use only the first page per file.</label>
+    </div>
+
+    <div class="grid">
+      <div class="files">
+        <div class="drop-zone" id="dropZone">
+          <div>
+            <strong>Drag & drop PDFs</strong>
+            <span>Drop up to three PDFs to auto-fill slots A, B, C.</span>
+          </div>
+          <div class="badge">PDF only</div>
+        </div>
+        <div class="file-card">
+          <label for="pdfA">PDF A (first page used)</label>
+          <input class="field" id="pdfA" type="file" accept="application/pdf">
+          <div class="file-name" id="pdfAName">No file selected</div>
+        </div>
+        <div class="file-card">
+          <label for="pdfB">PDF B (first page used)</label>
+          <input class="field" id="pdfB" type="file" accept="application/pdf">
+          <div class="file-name" id="pdfBName">No file selected</div>
+        </div>
+        <div class="file-card">
+          <label for="pdfC">PDF C (optional, first page used)</label>
+          <input class="field" id="pdfC" type="file" accept="application/pdf">
+          <div class="file-name" id="pdfCName">No file selected</div>
+          <div class="muted">Leave empty to process only two PDFs.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <div class="pill">Highlights: month names (multi-language) and date strings on each first page.</div>
+      <button id="processBtn">Merge & Download</button>
+    </div>
+
+    <pre class="status" id="status">Waiting for input…</pre>
+    <footer>
+      <span>Runs fully in your browser with <a href="https://github.com/Hopding/pdf-lib" target="_blank" rel="noreferrer">pdf-lib</a> + <a href="https://mozilla.github.io/pdf.js/" target="_blank" rel="noreferrer">pdf.js</a>.</span>
+      <span>No React, no build step.</span>
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script>
+    const statusBox = document.getElementById("status");
+    const processBtn = document.getElementById("processBtn");
+    const dropZone = document.getElementById("dropZone");
+    const fileInputs = ["pdfA", "pdfB", "pdfC"].map((id) => document.getElementById(id));
+    const fileNameEls = {
+      pdfA: document.getElementById("pdfAName"),
+      pdfB: document.getElementById("pdfBName"),
+      pdfC: document.getElementById("pdfCName")
+    };
+    const PDFJS_CDN_VERSION = "4.2.67";
+    let pdfjsLibReady;
+    const MONTH_TERMS = {
+      1: ["january", "jan", "gennaio", "gen"],
+      2: ["february", "feb", "febbraio"],
+      3: ["march", "mar", "marzo"],
+      4: ["april", "apr", "aprile"],
+      5: ["may", "mag", "maggio"],
+      6: ["june", "jun", "giugno", "giu"],
+      7: ["july", "jul", "luglio", "lug"],
+      8: ["august", "aug", "agosto", "ago"],
+      9: ["september", "sep", "sept", "settembre", "set"],
+      10: ["october", "oct", "ottobre", "ott"],
+      11: ["november", "nov", "novembre"],
+      12: ["december", "dec", "dicembre", "dic"]
+    };
+
+    const escapeRegex = (val) => val.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    function log(message) {
+      statusBox.textContent = message;
+    }
+
+    function appendLog(message) {
+      statusBox.textContent += "\\n" + message;
+    }
+
+    function updateFileName(input) {
+      const el = fileNameEls[input.id];
+      if (!el) return;
+      const file = input.files?.[0];
+      el.textContent = file ? file.name : "No file selected";
+    }
+
+    function setInputFile(input, file) {
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      input.files = dt.files;
+      updateFileName(input);
+    }
+
+    function distributeDroppedFiles(files) {
+      const pdfs = Array.from(files).filter((f) => f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf"));
+      if (!pdfs.length) {
+        log("Only PDF files are accepted.");
+        return;
+      }
+      const inputs = [...fileInputs];
+      let used = 0;
+
+      // Fill empty slots first
+      for (const file of pdfs) {
+        const target = inputs.find((input) => !input.files.length);
+        if (target) {
+          setInputFile(target, file);
+          used++;
+        }
+      }
+
+      // If everything is filled, replace from the top
+      if (used < pdfs.length) {
+        const remaining = pdfs.slice(used, used + inputs.length);
+        remaining.forEach((file, idx) => {
+          setInputFile(inputs[idx], file);
+          used++;
+        });
+      }
+
+      log(`Dropped ${used} PDF${used === 1 ? "" : "s"} into the slots.`);
+    }
+
+    function setupDragAndDrop() {
+      if (!dropZone) return;
+
+      ["dragenter", "dragover"].forEach((evt) => {
+        dropZone.addEventListener(evt, (e) => {
+          e.preventDefault();
+          dropZone.classList.add("is-dragging");
+        });
+      });
+
+      ["dragleave", "dragend", "drop"].forEach((evt) => {
+        dropZone.addEventListener(evt, (e) => {
+          e.preventDefault();
+          dropZone.classList.remove("is-dragging");
+        });
+      });
+
+      dropZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        distributeDroppedFiles(e.dataTransfer.files);
+      });
+
+      dropZone.addEventListener("click", () => fileInputs[0]?.click());
+    }
+
+    async function ensurePdfJs() {
+      if (window.pdfjsLib) return window.pdfjsLib;
+      if (pdfjsLibReady) return pdfjsLibReady;
+      const base = `https://unpkg.com/pdfjs-dist@${PDFJS_CDN_VERSION}/build`;
+      pdfjsLibReady = import(`${base}/pdf.min.mjs`)
+        .then((mod) => {
+          const lib = mod?.default || mod;
+          window.pdfjsLib = lib;
+          if (lib?.GlobalWorkerOptions) {
+            lib.GlobalWorkerOptions.workerSrc = `${base}/pdf.worker.min.mjs`;
+          }
+          return lib;
+        })
+        .catch((err) => {
+          throw new Error("Unable to load pdf.js. Check your connection and retry.");
+        });
+      return pdfjsLibReady;
+    }
+
+    function parseMonthFromDateString(dateString) {
+      const pattern = /(\d{1,4})[-/\.](\d{1,2})[-/\.](\d{1,4})/;
+      const match = dateString.match(pattern);
+      if (match) {
+        const [ , a, b, c ] = match;
+        const aI = parseInt(a, 10);
+        const bI = parseInt(b, 10);
+        const cI = parseInt(c, 10);
+        if (a.length === 4 && bI >= 1 && bI <= 12) {
+          return bI; // yyyy/mm/dd
+        }
+        if (aI > 12 && bI >= 1 && bI <= 12) return bI;
+        if (bI > 12 && aI >= 1 && aI <= 12) return aI;
+        if (bI >= 1 && bI <= 12) return bI;
+        if (aI >= 1 && aI <= 12) return aI;
+      }
+      const fallback = dateString.match(/\b(1[0-2]|0?[1-9])\b/);
+      if (fallback) return parseInt(fallback[1], 10);
+      throw new Error(`Could not determine month from "${dateString}"`);
+    }
+
+    function buildMonthRegexes(month) {
+      const m = `${month}`;
+      const m0 = `${month}`.padStart(2, "0");
+      return [
+        String.raw`\\b\\d{1,2}[-/\\.]${m0}[-/]\\d{2,4}\\b`,
+        String.raw`\\b\\d{1,2}[-/\\.]${m}[-/]\\d{2,4}\\b`,
+        String.raw`\\b\\d{4}[-/\\.]${m0}[-/]\\d{1,2}\\b`,
+        String.raw`\\b\\d{4}[-/\\.]${m}[-/]\\d{1,2}\\b`
+      ];
+    }
+
+    function buildPatterns(dateString) {
+      const month = parseMonthFromDateString(dateString);
+      const literalTerms = Array.from(new Set([...(MONTH_TERMS[month] || []), dateString].filter(Boolean)));
+      const regexes = buildMonthRegexes(month);
+      return { month, literalTerms, regexes };
+    }
+
+    function findMatchesInText(text, literalTerms, regexes) {
+      const matches = [];
+      literalTerms.forEach((term) => {
+        if (!term) return;
+        const re = new RegExp(escapeRegex(term), "gi");
+        let m;
+        while ((m = re.exec(text)) !== null) {
+          matches.push({ start: m.index, end: m.index + m[0].length });
+          if (m.index === re.lastIndex) re.lastIndex++;
+        }
+      });
+      regexes.forEach((pattern) => {
+        const re = new RegExp(pattern, "gi");
+        let m;
+        while ((m = re.exec(text)) !== null) {
+          matches.push({ start: m.index, end: m.index + m[0].length });
+          if (m.index === re.lastIndex) re.lastIndex++;
+        }
+      });
+      return matches;
+    }
+
+    function itemBoundingBox(item, viewport) {
+      const transform = pdfjsLib.Util.transform(viewport.transform, item.transform);
+      const x = transform[4];
+      const yTop = transform[5];
+      const width = item.width;
+      const height = item.height || Math.abs(transform[3]);
+      // Convert to PDF-lib coordinates (origin bottom-left)
+      return {
+        x,
+        y: viewport.height - yTop - height,
+        width,
+        height
+      };
+    }
+
+    function splitBoxesForMatches(box, matches, textLength) {
+      if (!textLength || !matches.length) return [];
+      return matches.map((m) => {
+        const portion = Math.max(m.end - m.start, 1) / textLength;
+        const offset = m.start / textLength;
+        return {
+          x: box.x + box.width * offset,
+          y: box.y,
+          width: box.width * portion,
+          height: box.height
+        };
+      });
+    }
+
+    async function collectHighlightRects(arrayBuffer, literalTerms, regexes, includeAllPages) {
+      const typed = arrayBuffer instanceof Uint8Array ? arrayBuffer : new Uint8Array(arrayBuffer);
+      const pdf = await pdfjsLib.getDocument({ data: typed }).promise;
+      const pages = includeAllPages ? Array.from({ length: pdf.numPages }, (_, i) => i + 1) : [1];
+      const rectsByPage = [];
+
+      for (const pageNum of pages) {
+        const page = await pdf.getPage(pageNum);
+        const viewport = page.getViewport({ scale: 1 });
+        const content = await page.getTextContent({ normalizeWhitespace: true });
+        const rects = [];
+        for (const item of content.items) {
+          if (!item.str || !item.transform) continue;
+          const matches = findMatchesInText(item.str, literalTerms, regexes);
+          if (!matches.length) continue;
+          const box = itemBoundingBox(item, viewport);
+          rects.push(...splitBoxesForMatches(box, matches, item.str.length));
+        }
+        rectsByPage.push(rects);
+      }
+
+      return { rectsByPage };
+    }
+
+    async function readFileBuffer(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    function drawHighlights(page, rects) {
+      rects.forEach(({ x, y, width, height }) => {
+        page.drawRectangle({
+          x,
+          y,
+          width,
+          height,
+          color: PDFLib.rgb(1, 1, 0),
+          opacity: 0.35,
+          borderOpacity: 0
+        });
+      });
+    }
+
+    async function process() {
+      const dateString = document.getElementById("date").value.trim();
+      const pdfA = document.getElementById("pdfA").files[0];
+      const pdfB = document.getElementById("pdfB").files[0];
+      const pdfC = document.getElementById("pdfC").files[0];
+      const includeAllPages = document.getElementById("includeAllPages").checked;
+      const outputName = (document.getElementById("output").value || "output.pdf").trim() || "output.pdf";
+
+      if (!dateString) {
+        log("Please provide a date string.");
+        return;
+      }
+      if (!pdfA || !pdfB) {
+        log("Select at least PDF A and PDF B.");
+        return;
+      }
+
+      processBtn.disabled = true;
+      log("Ensuring pdf.js is loaded…");
+
+      let pdfJs;
+      try {
+        pdfJs = await ensurePdfJs();
+      } catch (err) {
+        log(err.message);
+        processBtn.disabled = false;
+        return;
+      }
+
+      log("Parsing date and preparing patterns…");
+
+      let literalTerms, regexes, month;
+      try {
+        ({ literalTerms, regexes, month } = buildPatterns(dateString));
+      } catch (err) {
+        log(err.message);
+        processBtn.disabled = false;
+        return;
+      }
+
+      try {
+        const files = [pdfA, pdfB, pdfC].filter(Boolean);
+        const merged = await PDFLib.PDFDocument.create();
+
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          appendLog(`Reading ${file.name} (${includeAllPages ? "all pages" : "first page only"})…`);
+          const buffer = await readFileBuffer(file);
+          const bufferForPdfJs = buffer.slice(0); // pdf.js worker detaches its buffer; keep a copy for pdf-lib
+          const highlights = await collectHighlightRects(bufferForPdfJs, literalTerms, regexes, includeAllPages);
+          const srcDoc = await PDFLib.PDFDocument.load(buffer);
+          const pageCount = srcDoc.getPageCount();
+          const indices = includeAllPages ? Array.from({ length: pageCount }, (_, idx) => idx) : [0];
+          const copiedPages = await merged.copyPages(srcDoc, indices);
+          const totalHighlights = highlights.rectsByPage.reduce((sum, arr) => sum + arr.length, 0);
+
+          copiedPages.forEach((page, idx) => {
+            merged.addPage(page);
+            const rects = highlights.rectsByPage[idx] || [];
+            drawHighlights(page, rects);
+          });
+
+          appendLog(`- Added ${copiedPages.length} page(s) with ${totalHighlights} highlight(s).`);
+        }
+
+        const pdfBytes = await merged.save({ addDefaultPage: false, useObjectStreams: false });
+        const blob = new Blob([pdfBytes], { type: "application/pdf" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = outputName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        appendLog(`Done. Month detected: ${month}. File downloaded as ${outputName}.`);
+      } catch (err) {
+        console.error(err);
+        log(`Error: ${err.message}`);
+      } finally {
+        processBtn.disabled = false;
+      }
+    }
+
+    setupDragAndDrop();
+    fileInputs.forEach((input) => {
+      input.addEventListener("change", () => updateFileName(input));
+    });
+    processBtn.addEventListener("click", process);
+  </script>
+</body>
+</html>
