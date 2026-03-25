@@ -8,6 +8,7 @@ A collection of browser-based tools for everyday tasks. No installation required
 |------|-------------|
 | [PDF Month Highlighter](tools/pdf-month-highlighter-bonus-nido.html) | Merges multiple PDFs and highlights dates/month names |
 | [LLM Cost Calculator](tools/llm-cost-calc.html) | Compare costs across LLM providers (OpenAI, Anthropic, Mistral, etc.) |
+| [Agent Cost Monte Carlo](tools/agent-cost-monte-carlo.html) | Monte Carlo simulation for AI agent costs |
 
 ## 🚀 Running Locally
 
@@ -69,6 +70,7 @@ ghtools/
 ├── index.html          # Homepage with search and tools grid
 ├── README.md           # This file
 └── tools/              # Individual tool pages
+    ├── agent-cost-monte-carlo.html
     ├── pdf-month-highlighter-bonus-nido.html
     └── llm-cost-calc.html
 ```
