@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Budget 2026 — Monte Carlo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+            options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'] }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        /* ── Tokens ───────────────────────────────────── */
+        :root {
+            --ink: #2c1f1a;
+            --ink-light: #5c4033;
+            --paper: #faf8f5;
+            --paper-warm: #f3ede5;
+            --rule: #d6cfc7;
+            --rule-light: #e8e2da;
+
+            --brown: #6d4c41;
+            --brown-dk: #4e342e;
+            --brown-lt: #efebe9;
+
+            --blue: #1565c0;
+            --blue-mid: #1976d2;
+            --blue-lt: #e3f2fd;
+            --blue-pale: #f0f7ff;
+
+            --green: #2e7d32;
+            --green-mid: #388e3c;
+            --green-lt: #e8f5e9;
+
+            --red-subtle: #b71c1c;
+
+            /* Provider palette */
+            --openai-bar: #2e7d32;
+            --anthropic-bar: #bf4a00;
+            --google-bar: #1565c0;
+
+            --serif: 'Playfair Display', Georgia, serif;
+            --sans: 'Inter', system-ui, sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --radius: 6px;
+            --shadow: 0 1px 3px rgba(44, 31, 26, .08), 0 4px 16px rgba(44, 31, 26, .06);
+        }
+
+        [x-cloak] {
+            display: none !important;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--sans);
+            background: var(--paper);
+            color: var(--ink);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* ── Page shell ───────────────────────────────── */
+        .page-shell {
+            max-width: 1320px;
+            margin: 0 auto;
+            padding: 0 24px 60px;
+        }
+
+        /* ── Masthead + run button ────────────────────── */
+        .masthead {
+            border-bottom: 2px solid var(--brown);
+            padding: 28px 0 16px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .masthead-left {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .masthead-left h1 {
+            font-family: var(--serif);
+            font-size: clamp(20px, 3.5vw, 30px);
+            font-weight: 700;
+            color: var(--brown-dk);
+            letter-spacing: -.4px;
+            line-height: 1.1;
+        }
+
+        .masthead-left p {
+            font-size: 13px;
+            color: var(--ink-light);
+        }
+
+        .masthead-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .masthead-badge {
+            font-family: var(--mono);
+            font-size: 11px;
+            background: var(--brown-dk);
+            color: #d7ccc8;
+            padding: 5px 12px;
+            border-radius: 100px;
+            white-space: nowrap;
+        }
+
+        /* ── Run button (top-right) ───────────────────── */
+        .btn-run {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 22px;
+            background: var(--brown-dk);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-family: var(--sans);
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: .3px;
+            cursor: pointer;
+            transition: background .15s, transform .1s, box-shadow .15s;
+            box-shadow: 0 2px 8px rgba(44, 31, 26, .18);
+        }
+
+        .btn-run:hover {
+            background: #3e2723;
+            box-shadow: 0 4px 12px rgba(44, 31, 26, .25);
+        }
+
+        .btn-run:active {
+            transform: scale(.97);
+        }
+
+        .btn-run.running {
+            opacity: .75;
+            cursor: not-allowed;
+        }
+
+        .btn-run-icon {
+            font-size: 15px;
+        }
+
+        /* ── Tabs ─────────────────────────────────────── */
+        .tab-strip {
+            display: flex;
+            margin-bottom: 28px;
+            border-bottom: 1px solid var(--rule);
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 9px 20px;
+            font-family: var(--sans);
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--ink-light);
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            transition: color .15s, border-color .15s;
+        }
+
+        .tab-btn:hover {
+            color: var(--brown);
+        }
+
+        .tab-btn.active {
+            color: var(--brown-dk);
+            border-bottom-color: var(--brown);
+            font-weight: 600;
+        }
+
+        /* ── Sim layout ───────────────────────────────── */
+        .sim-layout {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 28px;
+            align-items: start;
+        }
+
+        @media(max-width:880px) {
+            .sim-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ── Controls panel ───────────────────────────── */
+        .panel {
+            background: white;
+            border: 1px solid var(--rule);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .panel-section {
+            padding: 16px 18px;
+            border-bottom: 1px solid var(--rule-light);
+        }
+
+        .panel-section:last-child {
+            border-bottom: none;
+        }
+
+        .panel-section-title {
+            font-size: 9.5px;
+            font-weight: 600;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: var(--brown);
+            margin-bottom: 12px;
+        }
+
+        /* Model cards */
+        .model-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 7px;
+        }
+
+        .model-card {
+            border: 1.5px solid var(--rule);
+            border-radius: var(--radius);
+            padding: 9px 11px;
+            cursor: pointer;
+            transition: border-color .15s, background .15s;
+            position: relative;
+        }
+
+        .model-card:hover {
+            border-color: var(--blue-mid);
+            background: var(--blue-pale);
+        }
+
+        .model-card.selected {
+            border-color: var(--blue-mid);
+            background: var(--blue-lt);
+        }
+
+        /* Provider accent stripe */
+        .model-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 3px;
+            border-radius: var(--radius) 0 0 var(--radius);
+        }
+
+        .model-card.openai::before {
+            background: var(--openai-bar);
+        }
+
+        .model-card.anthropic::before {
+            background: var(--anthropic-bar);
+        }
+
+        .model-card.google::before {
+            background: var(--google-bar);
+        }
+
+        .model-card-name {
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--ink);
+            line-height: 1.2;
+            padding-left: 6px;
+        }
+
+        .model-card-tier {
+            font-size: 9.5px;
+            color: var(--ink-light);
+            margin-top: 2px;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            padding-left: 6px;
+        }
+
+        .model-card-prices {
+            margin-top: 6px;
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            padding-left: 6px;
+        }
+
+        .price-chip {
+            font-family: var(--mono);
+            font-size: 9px;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+
+        .price-chip.in {
+            background: #e3f2fd;
+            color: #0d47a1;
+        }
+
+        .price-chip.out {
+            background: #e8f5e9;
+            color: #1b5e20;
+        }
+
+        .price-chip.cache {
+            background: var(--brown-lt);
+            color: var(--brown-dk);
+        }
+
+        /* Param inputs */
+        .param-row {
+            margin-bottom: 13px;
+        }
+
+        .param-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 5px;
+        }
+
+        .param-label-text {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--ink);
+        }
+
+        .param-range-display {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--blue-mid);
+            font-weight: 500;
+        }
+
+        .dual-input-row {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .dual-input-row input[type="number"] {
+            flex: 1;
+            padding: 5px 7px;
+            border: 1px solid var(--rule);
+            border-radius: 4px;
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--ink);
+            background: var(--paper);
+            min-width: 0;
+            -moz-appearance: textfield;
+        }
+
+        .dual-input-row input[type="number"]:focus {
+            outline: none;
+            border-color: var(--blue-mid);
+            background: white;
+        }
+
+        .sep {
+            font-size: 11px;
+            color: var(--ink-light);
+            flex-shrink: 0;
+        }
+
+        /* MC runs slider */
+        .sim-count-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sim-count-row input[type="range"] {
+            flex: 1;
+            accent-color: var(--brown);
+        }
+
+        .sim-count-val {
+            font-family: var(--mono);
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--brown);
+            min-width: 44px;
+            text-align: right;
+        }
+
+        /* Live preview */
+        .live-preview {
+            background: linear-gradient(135deg, var(--blue-pale) 0%, var(--green-lt) 100%);
+            border: 1px solid var(--rule-light);
+            border-radius: var(--radius);
+            padding: 10px 14px;
+            font-size: 12px;
+            color: var(--ink-light);
+        }
+
+        .live-preview-val {
+            font-family: var(--mono);
+            font-size: 19px;
+            font-weight: 600;
+            color: var(--green);
+            display: block;
+            margin-top: 2px;
+        }
+
+        .live-preview-sub {
+            font-size: 10px;
+            margin-top: 2px;
+            color: var(--ink-light);
+        }
+
+        /* ── Results area ─────────────────────────────── */
+        .results-area {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        /* Stat strip */
+        .stat-strip {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            background: white;
+            border: 1px solid var(--rule);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        @media(max-width:580px) {
+            .stat-strip {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .stat-cell {
+            padding: 18px 16px;
+            border-right: 1px solid var(--rule-light);
+            position: relative;
+        }
+
+        .stat-cell:last-child {
+            border-right: none;
+        }
+
+        .stat-label {
+            font-size: 9.5px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--ink-light);
+        }
+
+        .stat-value {
+            font-family: var(--mono);
+            font-size: 26px;
+            font-weight: 500;
+            margin-top: 4px;
+            color: var(--ink);
+            line-height: 1;
+        }
+
+        .stat-sublabel {
+            font-size: 10px;
+            color: var(--ink-light);
+            margin-top: 4px;
+        }
+
+        .stat-cell.mean-marker::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--green-mid);
+        }
+
+        .stat-cell.p90-marker::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--blue-mid);
+        }
+
+        .stat-cell.p99-marker::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--red-subtle);
+        }
+
+        /* Chart card */
+        .chart-card {
+            background: white;
+            border: 1px solid var(--rule);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Scale-change flash overlay */
+        .scale-flash {
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 236, 153, .45);
+            pointer-events: none;
+            opacity: 0;
+            border-radius: var(--radius);
+            transition: opacity .05s;
+            z-index: 10;
+        }
+
+        .scale-flash.active {
+            opacity: 1;
+        }
+
+        .chart-header {
+            padding: 14px 18px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .chart-title {
+            font-family: var(--serif);
+            font-size: 15px;
+            color: var(--ink);
+            font-weight: 400;
+        }
+
+        .chart-subtitle {
+            font-size: 11px;
+            color: var(--ink-light);
+            margin-top: 2px;
+        }
+
+        .chart-legend {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10.5px;
+            color: var(--ink-light);
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        .legend-line {
+            width: 2px;
+            height: 13px;
+            border-radius: 1px;
+            flex-shrink: 0;
+        }
+
+        .chart-body {
+            padding: 10px 16px 14px;
+            position: relative;
+            height: 320px;
+        }
+
+        /* Task badge row */
+        .task-badge-row {
+            background: white;
+            border: 1px solid var(--rule);
+            border-radius: var(--radius);
+            padding: 12px 18px;
+            display: flex;
+            gap: 18px;
+            align-items: center;
+            flex-wrap: wrap;
+            box-shadow: var(--shadow);
+        }
+
+        .task-type-label {
+            font-size: 10px;
+            color: var(--ink-light);
+            margin-bottom: 1px;
+        }
+
+        .task-type-value {
+            font-size: 13.5px;
+            font-weight: 600;
+            color: var(--brown-dk);
+        }
+
+        .task-divider {
+            width: 1px;
+            height: 30px;
+            background: var(--rule-light);
+        }
+
+        .task-meta {
+            font-size: 12px;
+            color: var(--ink-light);
+        }
+
+        .task-meta strong {
+            color: var(--ink);
+        }
+
+        /* Projections */
+        .projections-row {
+            background: var(--paper-warm);
+            border: 1px solid var(--rule-light);
+            border-radius: var(--radius);
+            padding: 12px 18px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        @media(max-width:480px) {
+            .projections-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .proj-cell {
+            padding: 0 14px;
+            border-right: 1px solid var(--rule-light);
+        }
+
+        .proj-cell:first-child {
+            padding-left: 0;
+        }
+
+        .proj-cell:last-child {
+            border-right: none;
+        }
+
+        .proj-label {
+            font-size: 9.5px;
+            text-transform: uppercase;
+            letter-spacing: .8px;
+            color: var(--ink-light);
+            font-weight: 600;
+        }
+
+        .proj-value {
+            font-family: var(--mono);
+            font-size: 17px;
+            font-weight: 500;
+            color: var(--blue-mid);
+            margin-top: 3px;
+        }
+
+        .proj-sub {
+            font-size: 10px;
+            color: var(--ink-light);
+            margin-top: 1px;
+        }
+
+        /* ── Specs ────────────────────────────────────── */
+        .specs-layout {
+            max-width: 760px;
+        }
+
+        .specs-section {
+            margin-bottom: 38px;
+        }
+
+        .specs-section h2 {
+            font-family: var(--serif);
+            font-size: 21px;
+            font-weight: 400;
+            color: var(--brown-dk);
+            border-bottom: 1px solid var(--rule);
+            padding-bottom: 9px;
+            margin-bottom: 16px;
+        }
+
+        .specs-section h3 {
+            font-family: var(--serif);
+            font-size: 16px;
+            font-weight: 400;
+            color: var(--ink);
+            margin-top: 26px;
+            margin-bottom: 9px;
+        }
+
+        .specs-section p,
+        .specs-section li {
+            font-size: 14px;
+            line-height: 1.75;
+            color: var(--ink);
+        }
+
+        .specs-section ul {
+            padding-left: 20px;
+            margin-top: 8px;
+        }
+
+        .specs-section li {
+            margin-bottom: 6px;
+        }
+
+        .eq-block {
+            background: var(--paper-warm);
+            border-left: 3px solid var(--blue-mid);
+            padding: 13px 18px;
+            margin: 14px 0;
+            border-radius: 0 var(--radius) var(--radius) 0;
+            font-size: 15px;
+            overflow-x: auto;
+        }
+
+        .spec-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 14px 0;
+            font-size: 13px;
+        }
+
+        .spec-table thead th {
+            text-align: left;
+            padding: 8px 12px;
+            background: var(--brown-dk);
+            color: white;
+            font-weight: 500;
+            font-size: 11.5px;
+        }
+
+        .spec-table tbody td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--rule-light);
+            vertical-align: top;
+        }
+
+        .spec-table tbody tr:hover {
+            background: var(--paper-warm);
+        }
+
+        .spec-table .money {
+            font-family: var(--mono);
+            font-size: 12px;
+            text-align: right;
+        }
+
+        .latency-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 13px;
+        }
+
+        .latency-table td {
+            padding: 7px 12px;
+            border-bottom: 1px solid var(--rule-light);
+        }
+
+        .latency-table td:first-child {
+            font-family: var(--mono);
+            font-size: 11.5px;
+            color: var(--blue-mid);
+            white-space: nowrap;
+        }
+
+        .latency-table tr:hover {
+            background: var(--paper-warm);
+        }
+
+        .limit-card {
+            border: 1px solid var(--rule-light);
+            border-left: 3px solid var(--brown);
+            border-radius: 0 var(--radius) var(--radius) 0;
+            padding: 11px 15px;
+            margin-bottom: 9px;
+            background: white;
+        }
+
+        .limit-card-title {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--brown-dk);
+            margin-bottom: 3px;
+        }
+
+        .limit-card p {
+            font-size: 12.5px;
+            color: var(--ink-light);
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .spec-note {
+            background: var(--blue-pale);
+            border: 1px solid #c5d8f5;
+            border-radius: var(--radius);
+            padding: 11px 14px;
+            font-size: 12px;
+            color: var(--blue);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="page-shell" x-data="simulatorApp()" x-init="init()">
+
+        <!-- ── Masthead with Run button ─────────────────── -->
+        <div class="masthead">
+            <div class="masthead-left">
+                <h1>Agent Budget 2026</h1>
+                <p>It's difficult to understand how much a continuously-running AI agent actually costs — until the bill
+                    arrives. This tool makes the uncertainty clearer.</p>
+            </div>
+            <div class="masthead-right">
+                <span class="masthead-badge">v2.1 &middot; March 2026</span>
+                <button id="btn-run-sim" class="btn-run" :class="{ running }" :disabled="running"
+                    @click="runSimulation()">
+                    <span class="btn-run-icon" x-text="running ? '⏳' : '▶'"></span>
+                    <span x-text="running ? 'Running…' : 'Run Simulation'"></span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ── Tabs ─────────────────────────────────────── -->
+        <div class="tab-strip">
+            <button class="tab-btn" :class="{ active: activeTab==='sim' }" @click="activeTab='sim'">Simulator</button>
+            <button class="tab-btn" :class="{ active: activeTab==='spec' }" @click="switchToSpec()">Specifications &amp;
+                Limitations</button>
+        </div>
+
+        <!-- ══════════ SIMULATOR ══════════ -->
+        <div x-show="activeTab==='sim'" x-cloak>
+            <div class="sim-layout">
+
+                <!-- LEFT: controls -->
+                <div>
+                    <div class="panel">
+
+                        <!-- Model -->
+                        <div class="panel-section">
+                            <div class="panel-section-title">Model</div>
+                            <div class="model-grid">
+                                <template x-for="(m, i) in models" :key="i">
+                                    <div class="model-card" :class="[{ selected: selectedModelIndex===i }, m.provider]"
+                                        @click="selectedModelIndex=i; scheduleRun()">
+                                        <div class="model-card-name" x-text="m.name"></div>
+                                        <div class="model-card-tier" x-text="m.tier"></div>
+                                        <div class="model-card-prices">
+                                            <span class="price-chip in" x-text="`in $${m.input}`"></span>
+                                            <span class="price-chip out" x-text="`out $${m.output}`"></span>
+                                            <span class="price-chip cache" x-text="`cache $${m.cache}`"></span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Operational -->
+                        <div class="panel-section">
+                            <div class="panel-section-title">Operational Parameters</div>
+
+                            <div class="param-row">
+                                <div class="param-label">
+                                    <span class="param-label-text">Latency</span>
+                                    <span class="param-range-display" x-text="`${latMin}s – ${latMax}s`"></span>
+                                </div>
+                                <div class="dual-input-row">
+                                    <input type="number" x-model.number="latMin" min="0.5" max="60" step="0.5"
+                                        @change="scheduleRun()">
+                                    <span class="sep">to</span>
+                                    <input type="number" x-model.number="latMax" min="0.5" max="60" step="0.5"
+                                        @change="scheduleRun()">
+                                    <span class="sep">s</span>
+                                </div>
+                            </div>
+
+                            <div class="param-row">
+                                <div class="param-label">
+                                    <span class="param-label-text">Duty Cycle</span>
+                                    <span class="param-range-display" x-text="`${dcMin}% – ${dcMax}%`"></span>
+                                </div>
+                                <div class="dual-input-row">
+                                    <input type="number" x-model.number="dcMin" min="1" max="100"
+                                        @change="scheduleRun()">
+                                    <span class="sep">to</span>
+                                    <input type="number" x-model.number="dcMax" min="1" max="100"
+                                        @change="scheduleRun()">
+                                    <span class="sep">%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tokens -->
+                        <div class="panel-section">
+                            <div class="panel-section-title">Token Metrics</div>
+
+                            <div class="param-row">
+                                <div class="param-label">
+                                    <span class="param-label-text">Context Input <span
+                                            style="font-family:var(--mono);font-size:9.5px;background:#e3f2fd;color:#0d47a1;padding:1px 6px;border-radius:3px;font-weight:600;vertical-align:middle;">log-uniform</span></span>
+                                    <span class="param-range-display"
+                                        x-text="`${(ctxMin/1000).toFixed(1)}K – ${(ctxMax/1000).toFixed(0)}K`"></span>
+                                </div>
+                                <div class="dual-input-row">
+                                    <input type="number" x-model.number="ctxMin" min="100" step="100"
+                                        @change="scheduleRun()">
+                                    <span class="sep">to</span>
+                                    <input type="number" x-model.number="ctxMax" min="100" step="100"
+                                        @change="scheduleRun()">
+                                    <span class="sep">tok</span>
+                                </div>
+                            </div>
+
+                            <div class="param-row">
+                                <div class="param-label">
+                                    <span class="param-label-text">Thinking / Output</span>
+                                    <span class="param-range-display" x-text="`${outMin} – ${outMax}`"></span>
+                                </div>
+                                <div class="dual-input-row">
+                                    <input type="number" x-model.number="outMin" min="1" step="50"
+                                        @change="scheduleRun()">
+                                    <span class="sep">to</span>
+                                    <input type="number" x-model.number="outMax" min="1" step="50"
+                                        @change="scheduleRun()">
+                                    <span class="sep">tok</span>
+                                </div>
+                            </div>
+
+                            <div class="param-row">
+                                <div class="param-label">
+                                    <span class="param-label-text">Cache Hit Ratio</span>
+                                    <span class="param-range-display" x-text="`${cacheMin}% – ${cacheMax}%`"></span>
+                                </div>
+                                <div class="dual-input-row">
+                                    <input type="number" x-model.number="cacheMin" min="0" max="100"
+                                        @change="scheduleRun()">
+                                    <span class="sep">to</span>
+                                    <input type="number" x-model.number="cacheMax" min="0" max="100"
+                                        @change="scheduleRun()">
+                                    <span class="sep">%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- MC runs -->
+                        <div class="panel-section">
+                            <div class="panel-section-title">Monte Carlo Runs</div>
+                            <div class="sim-count-row">
+                                <input type="range" x-model.number="simulations" min="500" max="10000" step="500"
+                                    @change="scheduleRun()">
+                                <span class="sim-count-val" x-text="simulations.toLocaleString()"></span>
+                            </div>
+                        </div>
+
+                        <!-- Live preview -->
+                        <div class="panel-section">
+                            <div class="live-preview">
+                                <span>Midpoint cost per call <em>(estimate)</em></span>
+                                <span class="live-preview-val" x-text="`$${liveCallCost()}`"></span>
+                                <span class="live-preview-sub">Using parameter midpoints — full distribution runs
+                                    automatically</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- RIGHT: results -->
+                <div class="results-area">
+
+                    <!-- Stat strip -->
+                    <div class="stat-strip" x-show="results !== null" x-cloak>
+                        <div class="stat-cell mean-marker">
+                            <div class="stat-label">Mean / Hour</div>
+                            <div class="stat-value" x-text="`$${results?.mean}`"></div>
+                            <div class="stat-sublabel">Expected long-run value</div>
+                        </div>
+                        <div class="stat-cell">
+                            <div class="stat-label">Median P50</div>
+                            <div class="stat-value" x-text="`$${results?.p50}`"></div>
+                            <div class="stat-sublabel">Half of scenarios below</div>
+                        </div>
+                        <div class="stat-cell p90-marker">
+                            <div class="stat-label">P90 Budget</div>
+                            <div class="stat-value" x-text="`$${results?.p90}`"></div>
+                            <div class="stat-sublabel">Covers 90% of scenarios</div>
+                        </div>
+                        <div class="stat-cell p99-marker">
+                            <div class="stat-label">P99 Extreme</div>
+                            <div class="stat-value" x-text="`$${results?.p99}`"></div>
+                            <div class="stat-sublabel">Rare but dangerous spikes</div>
+                        </div>
+                    </div>
+
+                    <!-- Histogram -->
+                    <div class="chart-card" x-show="results !== null" x-cloak>
+                        <!-- scale-change flash overlay -->
+                        <div class="scale-flash" id="scaleFlash"></div>
+
+                        <div class="chart-header">
+                            <div>
+                                <div class="chart-title">Hourly Cost Distribution — <span
+                                        style="color:var(--ink-light);font-style:italic;"
+                                        x-text="selectedModel?.name"></span></div>
+                                <div class="chart-subtitle">% of simulated scenarios &mdash; P50 / P90 / P99 annotated
+                                    inline</div>
+                            </div>
+                            <div class="chart-legend">
+                                <div class="legend-item">
+                                    <div class="legend-dot" :style="`background:${selectedModel?.color}`"></div>
+                                    <span x-text="selectedModel?.provider + ' model'"></span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-line" style="background:#2e7d32"></div> P50
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-line" style="background:#1565c0"></div> P90
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-line" style="background:#b71c1c"></div> P99
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="histogramChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Task + meta -->
+                    <div class="task-badge-row" x-show="results !== null" x-cloak>
+                        <div>
+                            <div class="task-type-label">Inferred Task Type</div>
+                            <div class="task-type-value" x-text="results?.taskType"></div>
+                        </div>
+                        <div class="task-divider"></div>
+                        <div class="task-meta">Avg latency: <strong x-text="`${results?.avgLatency}s`"></strong></div>
+                        <div class="task-divider"></div>
+                        <div class="task-meta">Model: <strong x-text="selectedModel?.name"></strong></div>
+                        <div class="task-divider"></div>
+                        <div class="task-meta">Runs: <strong x-text="simulations.toLocaleString()"></strong></div>
+                    </div>
+
+                    <!-- Projections -->
+                    <div class="projections-row" x-show="results !== null" x-cloak>
+                        <div class="proj-cell">
+                            <div class="proj-label">Daily 24h @ P90</div>
+                            <div class="proj-value" x-text="`$${(results?.p90 * 24).toFixed(2)}`"></div>
+                            <div class="proj-sub">Budgeting target / day</div>
+                        </div>
+                        <div class="proj-cell">
+                            <div class="proj-label">Monthly @ P90</div>
+                            <div class="proj-value" x-text="`$${(results?.p90 * 24 * 30).toFixed(0)}`"></div>
+                            <div class="proj-sub">30-day continuous run</div>
+                        </div>
+                        <div class="proj-cell">
+                            <div class="proj-label">Mean / Call</div>
+                            <div class="proj-value" x-text="results?.meanCallCost ? `$${results.meanCallCost}` : '—'">
+                            </div>
+                            <div class="proj-sub">Expected cost per API invocation</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════ SPECIFICATIONS ══════════ -->
+        <div x-show="activeTab==='spec'" x-cloak>
+            <div class="specs-layout">
+
+                <div class="specs-section">
+                    <h2>1. Simulation Objective</h2>
+                    <p>This tool estimates the <strong>probability distribution of hourly API cost</strong> ($/hour) for
+                        a single, serial AI agent running continuously. It uses the <em>Monte Carlo method</em> to
+                        propagate uncertainty across all operational parameters simultaneously: latency variability,
+                        payload size, and cache efficiency.</p>
+                    <p>Each scenario is an independent random draw. After <em>n</em> draws, the aggregated distribution
+                        reveals expected costs, budget targets, and tail risks that deterministic estimates cannot
+                        capture.</p>
+                </div>
+
+                <div class="specs-section">
+                    <h2>2. Models and Pricing — March 2026</h2>
+                    <p>Costs are per <strong>1 million tokens</strong>. Prices are verified official figures at
+                        publication date.</p>
+                    <table class="spec-table">
+                        <thead>
+                            <tr>
+                                <th>Model</th>
+                                <th>Provider</th>
+                                <th>Tier</th>
+                                <th class="money">Input / 1M</th>
+                                <th class="money">Output / 1M</th>
+                                <th class="money">Cache Read / 1M</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="m in models" :key="m.name">
+                                <tr>
+                                    <td x-text="m.name"></td>
+                                    <td x-text="m.provider.charAt(0).toUpperCase() + m.provider.slice(1)"></td>
+                                    <td x-text="m.tier"></td>
+                                    <td class="money" x-text="`$${m.input.toFixed(2)}`"></td>
+                                    <td class="money" x-text="`$${m.output.toFixed(2)}`"></td>
+                                    <td class="money" x-text="`$${m.cache.toFixed(2)}`"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                    <div class="spec-note">
+                        <strong>Notes:</strong> GPT-5.4 cache cost estimated at 10% of input (not separately published).
+                        Gemini 3 Flash is used as a proxy for 3.1 Flash (not yet GA). Gemini 3.1 Pro rates apply for
+                        contexts ≤200K tokens. Reasoning/thinking tokens are billed at output rates and not modelled
+                        separately — see §5.
+                    </div>
+                </div>
+
+                <div class="specs-section">
+                    <h2>3. Calculation Logic</h2>
+                    <h3>Sampling</h3>
+                    <p>Most parameters are drawn from a <strong>uniform (linear) distribution</strong> over their
+                        configured range:</p>
+                    <div class="eq-block">$$X_i \sim \mathcal{U}[\text{Min},\ \text{Max}]$$</div>
+                    <p>Context Input tokens are an exception: they are sampled from a <strong>log-uniform
+                            distribution</strong>, giving equal probability mass to each order of magnitude across the
+                        range. This prevents the 100K end from dominating the distribution when the range spans 1K–100K:
+                    </p>
+                    <div class="eq-block">
+                        $$X_i = \exp\!\left(\mathcal{U}[\ln(\text{Min}),\ \ln(\text{Max})]\right)$$
+                    </div>
+
+                    <h3>Cost per API Call</h3>
+                    <div class="eq-block">
+                        $$T_{\text{cached}} = T_{\text{context}} \times r_{\text{cache}}$$
+                        $$T_{\text{fresh}} = T_{\text{context}} - T_{\text{cached}}$$
+                        $$C_{\text{call}} = \frac{T_{\text{fresh}} \cdot P_{\text{in}} + T_{\text{cached}} \cdot
+                        P_{\text{cache}} + T_{\text{out}} \cdot P_{\text{out}}}{10^6}$$
+                    </div>
+
+                    <h3>Calls per Hour</h3>
+                    <div class="eq-block">$$\text{Calls/hr} = \frac{3600}{L} \times d$$</div>
+                    <p>where $L$ is sampled latency (s) and $d$ is the sampled duty cycle (fraction 0–1).</p>
+
+                    <h3>Hourly Cost</h3>
+                    <div class="eq-block">$$C_{\text{hour}} = C_{\text{call}} \times \text{Calls/hr}$$</div>
+
+                    <h3>Statistics</h3>
+                    <div class="eq-block">
+                        $$\bar{C} = \frac{1}{n}\sum_i C^{(i)}_{\text{hour}}, \quad P_{k} = C^{(\lfloor k \cdot
+                        n\rfloor)}_{\text{hour}}$$
+                    </div>
+                    <p>The histogram y-axis shows <strong>percentage of scenarios</strong> falling in each bin, so that
+                        run count does not affect visual scale.</p>
+                </div>
+
+                <div class="specs-section">
+                    <h2>4. Latency → Task Type Mapping</h2>
+                    <p>Inferred task type is based on empirical thresholds derived from operational observation, not
+                        official provider benchmarks.</p>
+                    <table class="latency-table">
+                        <tbody>
+                            <tr>
+                                <td>&lt; 3.5 s</td>
+                                <td>Fast Interactions — Chat, Commands</td>
+                            </tr>
+                            <tr>
+                                <td>3.5 s – 8 s</td>
+                                <td>Standard Tasks — Synthesis, Data Analysis</td>
+                            </tr>
+                            <tr>
+                                <td>8 s – 14 s</td>
+                                <td>Complex Tasks — Coding, Reasoning</td>
+                            </tr>
+                            <tr>
+                                <td>&gt; 14 s</td>
+                                <td>Deep Reasoning — Strategic Planning, Chain of Thought</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="specs-section">
+                    <h2>5. Assumptions &amp; Limitations</h2>
+                    <div class="limit-card">
+                        <div class="limit-card-title">No Parallelism</div>
+                        <p>The model simulates exactly one serial agent: one call at a time, no concurrent execution.
+                            Worker pools, fan-out graphs, and multi-step pipelines require a separate model.</p>
+                    </div>
+                    <div class="limit-card">
+                        <div class="limit-card-title">Thinking Tokens Not Separated</div>
+                        <p>Models with extended reasoning (Claude Opus, GPT-5.4 reasoning mode) bill thinking tokens at
+                            output prices. They are folded into the Output parameter. For reasoning-heavy workloads the
+                            actual cost may be higher.</p>
+                    </div>
+                    <div class="limit-card">
+                        <div class="limit-card-title">Parameter Independence</div>
+                        <p>Monte Carlo sampling assumes all parameters are independent. In practice, latency and
+                            output-token count are positively correlated, as are cache hit ratio and context size. This
+                            can understate variance at the tails.</p>
+                    </div>
+                    <div class="limit-card">
+                        <div class="limit-card-title">Fixed Pricing</div>
+                        <p>Pricing is static for the session. Volume discounts, Batch API pricing (−50%), time-of-day
+                            variability, and cache <em>write</em> costs are not modelled.</p>
+                    </div>
+                    <div class="limit-card">
+                        <div class="limit-card-title">Partial Logarithmic Sampling</div>
+                        <p><strong>Context Input tokens</strong> use log-uniform sampling, correctly weighting small and
+                            large contexts equally. All other parameters (latency, output tokens, duty cycle, cache
+                            ratio) still use linear (uniform) sampling. Future versions may extend log-sampling to
+                            output tokens as well.</p>
+                    </div>
+                    <div class="limit-card">
+                        <div class="limit-card-title">Empirical Latency Thresholds</div>
+                        <p>The task-type boundaries in §4 are based on field observations, not official provider
+                            benchmarks. They should be treated as indicative.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div><!-- /page-shell -->
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('simulatorApp', () => ({
+                activeTab: 'sim',
+                running: false,
+                debounceTimer: null,
+
+                /* Provider bar colours */
+                PROVIDER_COLOR: {
+                    openai: '#2e7d32',
+                    anthropic: '#bf4a00',
+                    google: '#1565c0',
+                },
+
+                models: [
+                    { name: 'GPT-5.4', tier: 'Pro', provider: 'openai', input: 2.50, output: 15.00, cache: 0.25 },
+                    { name: 'GPT-5.4 mini', tier: 'Flash', provider: 'openai', input: 0.75, output: 4.50, cache: 0.08 },
+                    { name: 'Claude Opus 4.6', tier: 'Reasoning', provider: 'anthropic', input: 5.00, output: 25.00, cache: 0.50 },
+                    { name: 'Claude Sonnet 4.6', tier: 'Pro', provider: 'anthropic', input: 3.00, output: 15.00, cache: 0.30 },
+                    { name: 'Gemini 3.1 Pro', tier: 'Pro', provider: 'google', input: 2.00, output: 12.00, cache: 0.20 },
+                    { name: 'Gemini 3 Flash', tier: 'Flash', provider: 'google', input: 0.50, output: 3.00, cache: 0.05 },
+                ],
+                selectedModelIndex: 0,
+                simulations: 1000,
+
+                latMin: 2, latMax: 10,
+                dcMin: 30, dcMax: 100,
+                ctxMin: 1000, ctxMax: 100000,
+                outMin: 1000, outMax: 10000,
+                cacheMin: 20, cacheMax: 90,
+
+                results: null,
+                chartInstance: null,
+                /* Track previous axis range to detect scale changes */
+                prevChartMax: null,
+
+                get selectedModel() {
+                    const m = this.models[this.selectedModelIndex];
+                    return { ...m, color: this.PROVIDER_COLOR[m.provider] };
+                },
+
+                init() {
+                    // Run immediately on load
+                    this.$nextTick(() => this.runSimulation());
+                },
+
+                /* Debounce re-runs by 400 ms after any param change */
+                scheduleRun() {
+                    clearTimeout(this.debounceTimer);
+                    this.debounceTimer = setTimeout(() => this.runSimulation(), 400);
+                },
+
+                liveCallCost() {
+                    const m = this.selectedModel;
+                    // Geometric mean matches log-uniform sampling
+                    const ctx = Math.sqrt(this.ctxMin * this.ctxMax);
+                    const out = (this.outMin + this.outMax) / 2;
+                    const cache = ((this.cacheMin + this.cacheMax) / 2) / 100;
+                    const fresh = ctx * (1 - cache);
+                    const cached = ctx * cache;
+                    const cost = (fresh * m.input + cached * m.cache + out * m.output) / 1e6;
+                    return cost < 0.001 ? cost.toExponential(2) : cost.toFixed(4);
+                },
+
+                sample(min, max) { return min + Math.random() * (max - min); },
+
+                switchToSpec() {
+                    this.activeTab = 'spec';
+                    this.$nextTick(() => {
+                        if (window.MathJax?.typesetPromise) window.MathJax.typesetPromise();
+                    });
+                },
+
+                runSimulation() {
+                    if (this.running) return;
+                    this.running = true;
+
+                    setTimeout(() => {
+                        const costs = [];
+                        let totalLat = 0, totalCallCost = 0;
+                        const m = this.selectedModel;
+
+                        for (let i = 0; i < this.simulations; i++) {
+                            const lat = this.sample(this.latMin, this.latMax);
+                            const dc = this.sample(this.dcMin, this.dcMax) / 100;
+                            // Log-uniform sampling: gives equal weight to each order of magnitude
+                            const ctx = Math.exp(this.sample(Math.log(this.ctxMin), Math.log(this.ctxMax)));
+                            const out = this.sample(this.outMin, this.outMax);
+                            const cache = this.sample(this.cacheMin, this.cacheMax) / 100;
+
+                            totalLat += lat;
+                            const ctxCached = ctx * cache;
+                            const ctxFresh = ctx - ctxCached;
+                            const callCost = (ctxFresh * m.input + ctxCached * m.cache + out * m.output) / 1e6;
+                            totalCallCost += callCost;
+                            costs.push(callCost * (3600 / lat) * dc);
+                        }
+
+                        costs.sort((a, b) => a - b);
+                        const n = costs.length;
+                        const sum = costs.reduce((a, b) => a + b, 0);
+                        const mean = sum / n;
+                        const p50 = costs[Math.floor(n * 0.50)];
+                        const p90 = costs[Math.floor(n * 0.90)];
+                        const p99 = costs[Math.floor(n * 0.99)];
+                        const avgLat = totalLat / n;
+                        const meanCallCost = totalCallCost / n;
+
+                        let taskType = 'Deep Reasoning (Strategic Planning, CoT)';
+                        if (avgLat < 3.5) taskType = 'Fast Interactions — Chat / Commands';
+                        else if (avgLat <= 8) taskType = 'Standard Tasks — Synthesis, Data Analysis';
+                        else if (avgLat <= 14) taskType = 'Complex Tasks — Coding, Reasoning';
+
+                        this.results = {
+                            mean: mean.toFixed(2),
+                            p50: p50.toFixed(2),
+                            p90: p90.toFixed(2),
+                            p99: p99.toFixed(2),
+                            taskType,
+                            avgLatency: avgLat.toFixed(1),
+                            meanCallCost: meanCallCost < 0.0001 ? meanCallCost.toExponential(2) : meanCallCost.toFixed(4),
+                            rawP50: p50, rawP90: p90, rawP99: p99,
+                            rawMin: costs[0], rawMax: costs[n - 1],
+                        };
+
+                        this.running = false;
+                        this.$nextTick(() => this.renderChart(costs));
+                    }, 10);
+                },
+
+                renderChart(costs) {
+                    if (this.chartInstance) { this.chartInstance.destroy(); this.chartInstance = null; }
+
+                    const canvas = document.getElementById('histogramChart');
+                    if (!canvas) return;
+
+                    const BINS = 50;
+                    const mn = costs[0];
+                    const mx = costs[costs.length - 1];
+                    const binSize = (mx - mn) / BINS || 0.001;
+
+                    /* Build histogram as percentages */
+                    const hist = new Array(BINS).fill(0);
+                    costs.forEach(c => {
+                        let idx = Math.floor((c - mn) / binSize);
+                        if (idx >= BINS) idx = BINS - 1;
+                        hist[idx]++;
+                    });
+                    const pct = hist.map(v => parseFloat(((v / costs.length) * 100).toFixed(2)));
+
+                    /* Detect scale change → flash */
+                    const newMax = Math.max(...pct);
+                    if (this.prevChartMax !== null && Math.abs(newMax - this.prevChartMax) / (this.prevChartMax || 1) > 0.15) {
+                        this._flashScale();
+                    }
+                    this.prevChartMax = newMax;
+
+                    const labels = hist.map((_, i) => (mn + (i + 0.5) * binSize).toFixed(3));
+                    const providerColor = this.PROVIDER_COLOR[this.selectedModel.provider];
+
+                    /* Shade bars: lighter where frequency lower, solid at peak */
+                    const barColors = pct.map(v => {
+                        const t = v / newMax; // 0..1
+                        // blend from very pale version of the provider colour → full colour
+                        return this._blendToWhite(providerColor, 1 - t * 0.85);
+                    });
+
+                    const ctx2d = canvas.getContext('2d');
+                    this.chartInstance = new Chart(ctx2d, {
+                        type: 'bar',
+                        data: {
+                            labels,
+                            datasets: [{
+                                label: '% of scenarios',
+                                data: pct,
+                                backgroundColor: barColors,
+                                borderWidth: 0,
+                                borderRadius: 1,
+                                categoryPercentage: 1.0,
+                                barPercentage: 1.0,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: { duration: 300, easing: 'easeOutQuart' },
+                            layout: { padding: { top: 26, right: 8 } },
+                            scales: {
+                                x: {
+                                    title: { display: true, text: '$/hour', font: { size: 11, family: "'Inter',sans-serif" }, color: '#5c4033' },
+                                    ticks: {
+                                        maxTicksLimit: 8,
+                                        callback: (_, i) => `$${parseFloat(labels[i]).toFixed(2)}`,
+                                        font: { size: 10, family: "'JetBrains Mono',monospace" },
+                                        color: '#5c4033',
+                                    },
+                                    grid: { display: false },
+                                    border: { color: '#d6cfc7' },
+                                },
+                                y: {
+                                    title: { display: true, text: '% of scenarios', font: { size: 11, family: "'Inter',sans-serif" }, color: '#5c4033' },
+                                    ticks: {
+                                        callback: v => v + '%',
+                                        font: { size: 10, family: "'JetBrains Mono',monospace" },
+                                        color: '#888',
+                                        maxTicksLimit: 6,
+                                    },
+                                    grid: { color: '#ece8e4', lineWidth: 1 },
+                                    border: { dash: [3, 3], color: '#d6cfc7' },
+                                }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        title: items => `~$${parseFloat(labels[items[0].dataIndex]).toFixed(3)}/hr`,
+                                        label: item => `${item.raw}% of scenarios`,
+                                    },
+                                    backgroundColor: '#2c1f1a',
+                                    titleFont: { family: "'JetBrains Mono',monospace", size: 12 },
+                                    bodyFont: { family: "'Inter',sans-serif", size: 11 },
+                                }
+                            }
+                        },
+                        plugins: [{
+                            id: 'percentileLines',
+                            afterDraw: (chart) => {
+                                const { ctx: c, chartArea: { left, right, top, bottom }, scales: { x } } = chart;
+                                const { rawP50, rawP99 } = this.results;
+                                // include rawP90 too
+                                const rawP90 = this.results.rawP90;
+
+                                const lines = [
+                                    { val: rawP50, color: '#2e7d32', label: 'P50', dash: [5, 4] },
+                                    { val: rawP90, color: '#1565c0', label: 'P90', dash: [5, 4] },
+                                    { val: rawP99, color: '#b71c1c', label: 'P99', dash: [5, 4] },
+                                ];
+
+                                c.save();
+                                lines.forEach(({ val, color, label, dash }) => {
+                                    const binIdx = Math.min(Math.floor((val - mn) / binSize), BINS - 1);
+                                    const px = x.getPixelForValue(binIdx + 0.5);
+                                    if (px < left || px > right) return;
+
+                                    c.beginPath();
+                                    c.strokeStyle = color;
+                                    c.lineWidth = 1.5;
+                                    c.setLineDash(dash);
+                                    c.moveTo(px, top - 4);
+                                    c.lineTo(px, bottom);
+                                    c.stroke();
+                                    c.setLineDash([]);
+
+                                    c.fillStyle = color;
+                                    c.font = "bold 10px 'JetBrains Mono',monospace";
+                                    c.textAlign = 'center';
+                                    c.fillText(label, px, top - 10);
+                                });
+                                c.restore();
+                            }
+                        }]
+                    });
+                },
+
+                /* Briefly flash the chart card to signal a scale change */
+                _flashScale() {
+                    const el = document.getElementById('scaleFlash');
+                    if (!el) return;
+                    el.classList.add('active');
+                    setTimeout(() => el.classList.remove('active'), 600);
+                },
+
+                /* Blend a hex colour toward white by `amount` (0=original, 1=white) */
+                _blendToWhite(hex, amount) {
+                    const r = parseInt(hex.slice(1, 3), 16);
+                    const g = parseInt(hex.slice(3, 5), 16);
+                    const b = parseInt(hex.slice(5, 7), 16);
+                    const rr = Math.round(r + (255 - r) * amount);
+                    const gg = Math.round(g + (255 - g) * amount);
+                    const bb = Math.round(b + (255 - b) * amount);
+                    return `rgb(${rr},${gg},${bb})`;
+                },
+            }));
+        });
+    </script>
+</body>
+
+</html>

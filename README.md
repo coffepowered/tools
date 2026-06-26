@@ -8,6 +8,7 @@ A collection of browser-based tools for everyday tasks. No installation required
 |------|------|-------------|
 | [PDF Month Highlighter](tools/pdf-month-highlighter-bonus-nido.html) | Tool | Merges multiple PDFs and highlights dates/month names |
 | [LLM Cost Calculator](tools/llm-cost-calc.html) | Tool | Compare costs across LLM providers (OpenAI, Anthropic, Mistral, etc.) |
+| [Agent Cost Monte Carlo](tools/agent-cost-monte-carlo.html) | Monte Carlo simulation for AI agent costs |
 | [La Memoria del Mondo (DRAM & HBM)](tools/making-sense-ram-june-2026.html) | Infographic | Interactive history, geography, and market consolidation of DRAM and HBM memory from 1969 to 2026 (in Italian) |
 
 ## 🚀 Running Locally
@@ -70,6 +71,7 @@ ghtools/
 ├── index.html          # Homepage with search and tools grid
 ├── README.md           # This file
 └── tools/              # Individual pages (tools and infographics)
+    ├── agent-cost-monte-carlo.html
     ├── pdf-month-highlighter-bonus-nido.html
     ├── llm-cost-calc.html
     └── making-sense-ram-june-2026.html
