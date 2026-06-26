@@ -320,6 +320,97 @@
             color: #555;
             line-height: 1.6;
         }
+
+        /* Provider-specific card designs */
+        .model-card.provider-openai {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border-left: 5px solid #10a37f;
+        }
+        .model-card.provider-openai .model-cost {
+            color: #10a37f;
+        }
+        .model-card.provider-openai .feature-tag {
+            background: rgba(16, 163, 127, 0.15);
+            color: #10a37f;
+        }
+
+        .model-card.provider-anthropic {
+            background: linear-gradient(135deg, #fdf8f6 0%, #fae8e0 100%);
+            border-left: 5px solid #cc785c;
+        }
+        .model-card.provider-anthropic .model-cost {
+            color: #cc785c;
+        }
+        .model-card.provider-anthropic .feature-tag {
+            background: rgba(204, 120, 92, 0.15);
+            color: #cc785c;
+        }
+
+        .model-card.provider-mistral-ai {
+            background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+            border-left: 5px solid #ea580c;
+        }
+        .model-card.provider-mistral-ai .model-cost {
+            color: #ea580c;
+        }
+        .model-card.provider-mistral-ai .feature-tag {
+            background: rgba(234, 88, 12, 0.15);
+            color: #ea580c;
+        }
+
+        .model-card.provider-google {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-left: 5px solid #1a73e8;
+        }
+        .model-card.provider-google .model-cost {
+            color: #1a73e8;
+        }
+        .model-card.provider-google .feature-tag {
+            background: rgba(26, 115, 232, 0.15);
+            color: #1a73e8;
+        }
+
+        .model-card.provider-deepseek-open-source {
+            background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%);
+            border-left: 5px solid #0d9488;
+        }
+        .model-card.provider-deepseek-open-source .model-cost {
+            color: #0d9488;
+        }
+        .model-card.provider-deepseek-open-source .feature-tag {
+            background: rgba(13, 148, 136, 0.15);
+            color: #0d9488;
+        }
+
+        .model-card.provider-alibaba-open-source,
+        .model-card.provider-alibaba {
+            background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+            border-left: 5px solid #7c3aed;
+        }
+        .model-card.provider-alibaba-open-source .model-cost,
+        .model-card.provider-alibaba .model-cost {
+            color: #7c3aed;
+        }
+        .model-card.provider-alibaba-open-source .feature-tag,
+        .model-card.provider-alibaba .feature-tag {
+            background: rgba(124, 58, 237, 0.15);
+            color: #7c3aed;
+        }
+
+        .model-card.provider-zai-zhipu-ai,
+        .model-card.provider-zhipu-ai-zai {
+            background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
+            border-left: 5px solid #db2777;
+        }
+        .model-card.provider-zai-zhipu-ai .model-cost,
+        .model-card.provider-zhipu-ai-zai .model-cost {
+            color: #db2777;
+        }
+        .model-card.provider-zai-zhipu-ai .feature-tag,
+        .model-card.provider-zhipu-ai-zai .feature-tag {
+            background: rgba(219, 39, 119, 0.15);
+            color: #db2777;
+        }
     </style>
 </head>
 
@@ -400,6 +491,10 @@
                         target="_blank">docs.anthropic.com/en/docs/pricing</a></li>
                 <li><strong>Mistral AI:</strong> <a href="https://mistral.ai/technology/#pricing"
                         target="_blank">mistral.ai/technology/#pricing</a></li>
+                <li><strong>Google Gemini:</strong> <a href="https://ai.google.dev/pricing"
+                        target="_blank">ai.google.dev/pricing</a></li>
+                <li><strong>Z.ai / Zhipu AI (GLM):</strong> <a href="https://open.bigmodel.cn/pricing"
+                        target="_blank">open.bigmodel.cn/pricing</a></li>
             </ul>
 
             <div class="cache-explanation">
@@ -407,136 +502,157 @@
                 <p><strong>Cache Mechanism:</strong> Prompt caching stores frequently reused input tokens (like system
                     prompts, instructions, or common context) to reduce costs and latency on subsequent requests.</p>
                 <ul>
-                    <li><strong>OpenAI:</strong> Automatic caching for prompts >1024 tokens. Cache reads cost ~50% less
-                        (10% of input price for cache read). Caches expire after 5-10 minutes of inactivity.</li>
-                    <li><strong>Anthropic:</strong> Manual cache control with 90% discount on cache reads (10% of input
-                        price). Cache writes cost 25% more than input. Expires after ~5 minutes.</li>
+                    <li><strong>OpenAI:</strong> Automatic caching. Cache reads receive a 90% discount (10% of input price). No cache write surcharges.</li>
+                    <li><strong>Anthropic:</strong> Manual cache control with 90% discount on cache reads (10% of input price). Cache writes cost 25% more than input.</li>
+                    <li><strong>Google Gemini:</strong> Context caching with 90% discount on cache reads (10% of input price) plus a small storage fee for active caches.</li>
+                    <li><strong>Z.ai / Zhipu AI (GLM):</strong> Automatic prompt caching with up to ~80% discount on cache reads. No cache write surcharges.</li>
                     <li><strong>Mistral:</strong> No prompt caching currently available.</li>
                 </ul>
                 <p><strong>In this calculator:</strong> When you set cache usage to 50%, it means 50% of your input
-                    tokens are read from cache (at discounted rate), and 50% are processed fresh. A small percentage of
-                    cached inputs incur a one-time cache write cost.</p>
+                    tokens are read from cache (at discounted rate), and 50% are processed fresh. For Anthropic models, cache writes incur a one-time surcharge of 25% on the cached inputs.</p>
             </div>
         </div>
     </div>
 
     <script>
-        // Pricing in USD per 1M tokens (updated Dec 2024)
+        function getProviderClass(provider) {
+            return 'provider-' + provider.toLowerCase()
+                .replace(/\s+/g, '-')
+                .replace(/[^a-z0-9\-]/g, '');
+        }
+
+        // Pricing in USD per 1M tokens (updated June 2026)
         const models = [
             {
-                name: 'GPT-5.2',
+                name: 'GPT-5.5 Pro',
                 provider: 'OpenAI',
-                inputPrice: 1.75,
-                outputPrice: 14.00,
-                cacheReadPrice: 0.175,
-                cacheWritePrice: 2.188,
-                features: ['Structured Output', 'Tool Calling', 'Vision', 'Long Context'],
-                benchmarks: {
-                    'SWE-bench': '80.0%',
-                    'GDPval': '70.9%',
-                    'AIME 2025': '100%',
-                    'Context': '400K tokens'
-                },
-                intelligence: 95
-            },
-            {
-                name: 'GPT-5.2 Pro',
-                provider: 'OpenAI',
-                inputPrice: 21.00,
-                outputPrice: 168.00,
-                cacheReadPrice: 2.10,
-                cacheWritePrice: 26.25,
+                inputPrice: 30.00,
+                outputPrice: 180.00,
+                cacheReadPrice: null,
+                cacheWritePrice: null,
                 features: ['Structured Output', 'Tool Calling', 'Extended Thinking', 'Vision'],
                 benchmarks: {
-                    'GPQA Diamond': '93.2%',
-                    'SWE-bench': '80.0%',
-                    'Context': '400K tokens',
+                    'GPQA Diamond': '95.2%',
+                    'SWE-bench': '83.5%',
+                    'Context': '1M tokens',
                     'Output': '128K tokens'
                 },
-                intelligence: 98
+                intelligence: 99
             },
             {
-                name: 'GPT-5 (Standard)',
+                name: 'GPT-5.5',
                 provider: 'OpenAI',
-                inputPrice: 1.25,
-                outputPrice: 10.00,
-                cacheReadPrice: 0.125,
-                cacheWritePrice: 1.563,
+                inputPrice: 5.00,
+                outputPrice: 30.00,
+                cacheReadPrice: 0.50,
+                cacheWritePrice: 5.00,
+                features: ['Structured Output', 'Tool Calling', 'Vision', 'Long Context', 'Agentic'],
+                benchmarks: {
+                    'SWE-bench': '81.2%',
+                    'GPQA Diamond': '92.6%',
+                    'AIME 2026': '98.5%',
+                    'Context': '1.05M tokens'
+                },
+                intelligence: 96
+            },
+            {
+                name: 'GPT-5.4',
+                provider: 'OpenAI',
+                inputPrice: 2.50,
+                outputPrice: 15.00,
+                cacheReadPrice: 0.25,
+                cacheWritePrice: 2.50,
                 features: ['Structured Output', 'Tool Calling', 'Reasoning', 'Vision'],
                 benchmarks: {
-                    'SWE-bench': '74.9%',
-                    'AIME 2025': '94.6%',
-                    'τ2-bench': '96.7%',
-                    'Context': '400K tokens'
+                    'MMLU-pro': '85.4%',
+                    'SWE-bench': '78.0%',
+                    'AIME 2025': '95.1%',
+                    'Context': '1M tokens'
                 },
-                intelligence: 90
+                intelligence: 92
             },
             {
-                name: 'GPT-5 mini',
+                name: 'GPT-5.4 mini',
                 provider: 'OpenAI',
-                inputPrice: 0.25,
-                outputPrice: 2.00,
-                cacheReadPrice: 0.025,
-                cacheWritePrice: 0.313,
+                inputPrice: 0.75,
+                outputPrice: 4.50,
+                cacheReadPrice: 0.075,
+                cacheWritePrice: 0.75,
                 features: ['Structured Output', 'Tool Calling', 'Fast', 'Vision'],
                 benchmarks: {
-                    'MMLU': '82%',
-                    'Coding': 'Strong',
+                    'MMLU': '84%',
+                    'Coding': 'Very Strong',
                     'Speed': 'Fast',
-                    'Context': '200K tokens'
+                    'Context': '500K tokens'
                 },
-                intelligence: 75
+                intelligence: 82
             },
             {
-                name: 'GPT-5 nano',
+                name: 'o3',
                 provider: 'OpenAI',
-                inputPrice: 0.05,
-                outputPrice: 0.40,
-                cacheReadPrice: 0.005,
-                cacheWritePrice: 0.063,
-                features: ['Structured Output', 'Tool Calling', 'Ultra Fast', 'Efficient'],
+                inputPrice: 2.00,
+                outputPrice: 8.00,
+                cacheReadPrice: 0.20,
+                cacheWritePrice: 2.00,
+                features: ['Deep Reasoning', 'Tool Calling', 'Math', 'Coding'],
                 benchmarks: {
-                    'Speed': 'Ultra Fast',
-                    'Efficiency': 'Highest',
-                    'Use Case': 'High Volume',
+                    'AIME 2026': '99.5%',
+                    'SWE-bench Pro': '68.0%',
+                    'GPQA Diamond': '94.2%',
+                    'Context': '200K tokens'
+                },
+                intelligence: 97
+            },
+            {
+                name: 'o3-mini',
+                provider: 'OpenAI',
+                inputPrice: 1.10,
+                outputPrice: 4.40,
+                cacheReadPrice: 0.11,
+                cacheWritePrice: 1.10,
+                features: ['Reasoning', 'Fast Coding', 'Math', 'Tool Calling'],
+                benchmarks: {
+                    'AIME 2026': '92.0%',
+                    'Coding': 'Excellent',
+                    'Speed': 'Fast Reasoning',
+                    'Context': '200K tokens'
+                },
+                intelligence: 88
+            },
+            {
+                name: 'GPT-4o (Legacy)',
+                provider: 'OpenAI',
+                inputPrice: 2.50,
+                outputPrice: 10.00,
+                cacheReadPrice: 1.25,
+                cacheWritePrice: 2.50,
+                features: ['Structured Output', 'Tool Calling', 'Vision', 'Multilingual'],
+                benchmarks: {
+                    'MMLU': '88.7%',
+                    'Math': 'Strong',
+                    'Coding': 'Good',
                     'Context': '128K tokens'
                 },
-                intelligence: 65
+                intelligence: 87
             },
             {
-                name: 'Claude Sonnet 4.5',
+                name: 'Claude Fable 5',
                 provider: 'Anthropic',
-                inputPrice: 3.00,
-                outputPrice: 15.00,
-                cacheReadPrice: 0.30,
-                cacheWritePrice: 3.75,
-                features: ['Structured Output', 'Tool Calling', 'Computer Use', 'Vision'],
+                inputPrice: 10.00,
+                outputPrice: 50.00,
+                cacheReadPrice: 1.00,
+                cacheWritePrice: 12.50,
+                features: ['Next-Gen Reasoning', 'Coding Superiority', 'Tool Calling', 'Agentic Execution'],
                 benchmarks: {
-                    'SWE-bench': '77.2%',
-                    'Computer Use': '61.4%',
-                    'Coding': 'Best in class',
-                    'Context': '200K tokens'
+                    'SWE-bench Pro': '71.5%',
+                    'GPQA Diamond': '96.2%',
+                    'AIME 2026': '100%',
+                    'Context': '1M tokens'
                 },
-                intelligence: 93
+                intelligence: 100
             },
             {
-                name: 'Claude Haiku 4.5',
-                provider: 'Anthropic',
-                inputPrice: 0.80,
-                outputPrice: 4.00,
-                cacheReadPrice: 0.08,
-                cacheWritePrice: 1.00,
-                features: ['Structured Output', 'Tool Calling', 'Fast', 'Computer Use'],
-                benchmarks: {
-                    'SWE-bench': '73.3%',
-                    'Speed': '4-5x faster',
-                    'Cost': 'Best value',
-                    'Context': '200K tokens'
-                },
-                intelligence: 80
-            },
-            {
-                name: 'Claude Opus 4.5',
+                name: 'Claude Opus 4.8',
                 provider: 'Anthropic',
                 inputPrice: 5.00,
                 outputPrice: 25.00,
@@ -544,12 +660,60 @@
                 cacheWritePrice: 6.25,
                 features: ['Structured Output', 'Tool Calling', 'Extended Thinking', 'Vision'],
                 benchmarks: {
-                    'SWE-bench': '80.9%',
-                    'Terminal-bench': '59.3%',
-                    'Long Tasks': 'Superior',
-                    'Context': '200K tokens'
+                    'SWE-bench': '82.5%',
+                    'GPQA Diamond': '93.2%',
+                    'Coding': 'Exceptional',
+                    'Context': '1M tokens'
                 },
                 intelligence: 96
+            },
+            {
+                name: 'Claude Sonnet 4.8 (Latest/Rumored)',
+                provider: 'Anthropic',
+                inputPrice: 3.00,
+                outputPrice: 15.00,
+                cacheReadPrice: 0.30,
+                cacheWritePrice: 3.75,
+                features: ['Structured Output', 'Tool Calling', 'Computer Use', 'Vision'],
+                benchmarks: {
+                    'SWE-bench': '78.5%',
+                    'Computer Use': '65.2%',
+                    'Coding': 'Best Balance',
+                    'Context': '200K tokens'
+                },
+                intelligence: 93
+            },
+            {
+                name: 'Claude Haiku 4.5',
+                provider: 'Anthropic',
+                inputPrice: 1.00,
+                outputPrice: 5.00,
+                cacheReadPrice: 0.10,
+                cacheWritePrice: 1.25,
+                features: ['Structured Output', 'Tool Calling', 'Fast', 'Computer Use'],
+                benchmarks: {
+                    'SWE-bench': '74.2%',
+                    'Speed': '4-5x faster',
+                    'Cost': 'High value',
+                    'Context': '200K tokens'
+                },
+                intelligence: 82
+            },
+            {
+                name: 'GLM-5.2',
+                provider: 'Z.ai / Zhipu AI',
+                inputPrice: 1.40,
+                outputPrice: 4.40,
+                cacheReadPrice: 0.26,
+                cacheWritePrice: 1.40,
+                features: ['Open Weights', 'Agentic Coding', 'High Reasoning', 'Long Context', '131K Output'],
+                benchmarks: {
+                    'SWE-bench Pro': '62.1%',
+                    'GPQA Diamond': '91.2%',
+                    'AIME 2026': '99.2%',
+                    'Context': '1M tokens'
+                },
+                intelligence: 94
             },
             {
                 name: 'Mistral Large 2',
@@ -600,18 +764,18 @@
                 intelligence: 83
             },
             {
-                name: 'Gemini 3 Flash',
+                name: 'Gemini 3.5 Flash',
                 provider: 'Google',
-                inputPrice: 0.50,
-                outputPrice: 3.00,
-                cacheReadPrice: null,
-                cacheWritePrice: null,
-                features: ['Structured Output', 'Tool Calling', 'Vision', 'Audio', 'Ultra Fast'],
+                inputPrice: 1.50,
+                outputPrice: 9.00,
+                cacheReadPrice: 0.15,
+                cacheWritePrice: 1.50,
+                features: ['Multimodal', '1M Context', 'Speed', 'Function Calling', 'Audio & Video'],
                 benchmarks: {
                     'SWE-bench': '78%',
                     'GPQA Diamond': '90.4%',
-                    'MMMU Pro': '81.2%',
-                    'Speed': '3x faster than 2.5 Pro'
+                    'Speed': 'Ultra Fast',
+                    'Context': '1M tokens'
                 },
                 intelligence: 88
             },
@@ -742,8 +906,9 @@
                     .map(([key, value]) => `<div class="benchmark-item"><span>${key}:</span><strong>${value}</strong></div>`)
                     .join('');
 
+                const providerClass = getProviderClass(model.provider);
                 return `
-                    <div class="model-card">
+                    <div class="model-card ${providerClass}">
                         <div class="model-header">
                             <div class="model-info">
                                 <div class="model-name">

@@ -2,12 +2,13 @@
 
 A collection of browser-based tools for everyday tasks. No installation required — runs entirely in your browser.
 
-## 🛠️ Available Tools
+## 🛠️ Available Tools & Resources
 
-| Tool | Description |
-|------|-------------|
-| [PDF Month Highlighter](tools/pdf-month-highlighter-bonus-nido.html) | Merges multiple PDFs and highlights dates/month names |
-| [LLM Cost Calculator](tools/llm-cost-calc.html) | Compare costs across LLM providers (OpenAI, Anthropic, Mistral, etc.) |
+| Name | Type | Description |
+|------|------|-------------|
+| [PDF Month Highlighter](tools/pdf-month-highlighter-bonus-nido.html) | Tool | Merges multiple PDFs and highlights dates/month names |
+| [LLM Cost Calculator](tools/llm-cost-calc.html) | Tool | Compare costs across LLM providers (OpenAI, Anthropic, Mistral, etc.) |
+| [La Memoria del Mondo (DRAM & HBM)](tools/making-sense-ram-june-2026.html) | Infographic | Interactive history, geography, and market consolidation of DRAM and HBM memory from 1969 to 2026 (in Italian) |
 
 ## 🚀 Running Locally
 
@@ -68,9 +69,10 @@ const TOOLS = [
 ghtools/
 ├── index.html          # Homepage with search and tools grid
 ├── README.md           # This file
-└── tools/              # Individual tool pages
+└── tools/              # Individual pages (tools and infographics)
     ├── pdf-month-highlighter-bonus-nido.html
-    └── llm-cost-calc.html
+    ├── llm-cost-calc.html
+    └── making-sense-ram-june-2026.html
 ```
 
 ## 📝 License
