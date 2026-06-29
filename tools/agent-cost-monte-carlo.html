@@ -48,6 +48,8 @@
             --openai-bar: #2e7d32;
             --anthropic-bar: #bf4a00;
             --google-bar: #1565c0;
+            --zhipu-bar: #db2777;
+            --qwen-bar: #7c3aed;
 
             --serif: 'Playfair Display', Georgia, serif;
             --sans: 'Inter', system-ui, sans-serif;
@@ -292,12 +294,32 @@
             background: var(--google-bar);
         }
 
+        .model-card.zhipu::before {
+            background: var(--zhipu-bar);
+        }
+
+        .model-card.qwen::before {
+            background: var(--qwen-bar);
+        }
+
         .model-card-name {
             font-size: 11.5px;
             font-weight: 600;
             color: var(--ink);
             line-height: 1.2;
             padding-left: 6px;
+            padding-right: 18px;
+        }
+
+        .card-checkbox {
+            position: absolute;
+            top: 9px;
+            right: 9px;
+            width: 14px;
+            height: 14px;
+            accent-color: var(--brown);
+            cursor: pointer;
+            z-index: 2;
         }
 
         .model-card-tier {
@@ -885,8 +907,9 @@
                             <div class="panel-section-title">Model</div>
                             <div class="model-grid">
                                 <template x-for="(m, i) in models" :key="i">
-                                    <div class="model-card" :class="[{ selected: selectedModelIndex===i }, m.provider]"
-                                        @click="selectedModelIndex=i; scheduleRun()">
+                                    <div class="model-card" :class="[{ selected: isSelected(i) }, m.provider]"
+                                        @click="selectCard(i, $event)">
+                                        <input type="checkbox" :checked="isSelected(i)" @click.stop="toggleCompare(i)" class="card-checkbox">
                                         <div class="model-card-name" x-text="m.name"></div>
                                         <div class="model-card-tier" x-text="m.tier"></div>
                                         <div class="model-card-prices">
@@ -1012,8 +1035,40 @@
                 <!-- RIGHT: results -->
                 <div class="results-area">
 
-                    <!-- Stat strip -->
-                    <div class="stat-strip" x-show="results !== null" x-cloak>
+                    <!-- Comparison table (shown when comparing multiple models) -->
+                    <div class="panel" x-show="comparisonResults.length > 1" x-cloak>
+                        <div class="panel-section">
+                            <div class="panel-section-title">Model Comparison (Hourly Cost)</div>
+                            <table class="spec-table" style="margin: 0; font-size: 13px;">
+                                <thead>
+                                    <tr>
+                                        <th>Model</th>
+                                        <th class="money">Mean</th>
+                                        <th class="money">Median (P50)</th>
+                                        <th class="money">P90 Budget</th>
+                                        <th class="money">P99 Extreme</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="res in comparisonResults" :key="res.name">
+                                        <tr>
+                                            <td style="font-weight: 600;">
+                                                <span :style="`display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:6px; background:${res.color}`"></span>
+                                                <span x-text="res.name"></span>
+                                            </td>
+                                            <td class="money" style="font-family:var(--mono);" x-text="`$${res.mean}`"></td>
+                                            <td class="money" style="font-family:var(--mono);" x-text="`$${res.p50}`"></td>
+                                            <td class="money" style="font-family:var(--mono); color:var(--blue-mid); font-weight:600;" x-text="`$${res.p90}`"></td>
+                                            <td class="money" style="font-family:var(--mono); color:var(--red-subtle);" x-text="`$${res.p99}`"></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Stat strip (single model only) -->
+                    <div class="stat-strip" x-show="results !== null && selectedModelIndices.length === 1" x-cloak>
                         <div class="stat-cell mean-marker">
                             <div class="stat-label">Mean / Hour</div>
                             <div class="stat-value" x-text="`$${results?.mean}`"></div>
@@ -1037,7 +1092,7 @@
                     </div>
 
                     <!-- Histogram -->
-                    <div class="chart-card" x-show="results !== null" x-cloak>
+                    <div class="chart-card" x-show="comparisonResults.length > 0" x-cloak>
                         <!-- scale-change flash overlay -->
                         <div class="scale-flash" id="scaleFlash"></div>
 
@@ -1045,24 +1100,38 @@
                             <div>
                                 <div class="chart-title">Hourly Cost Distribution — <span
                                         style="color:var(--ink-light);font-style:italic;"
-                                        x-text="selectedModel?.name"></span></div>
+                                        x-text="selectedModelIndices.length === 1 ? selectedModel?.name : 'Model Comparison'"></span></div>
                                 <div class="chart-subtitle">% of simulated scenarios &mdash; P50 / P90 / P99 annotated
                                     inline</div>
                             </div>
                             <div class="chart-legend">
-                                <div class="legend-item">
-                                    <div class="legend-dot" :style="`background:${selectedModel?.color}`"></div>
-                                    <span x-text="selectedModel?.provider + ' model'"></span>
-                                </div>
-                                <div class="legend-item">
-                                    <div class="legend-line" style="background:#2e7d32"></div> P50
-                                </div>
-                                <div class="legend-item">
-                                    <div class="legend-line" style="background:#1565c0"></div> P90
-                                </div>
-                                <div class="legend-item">
-                                    <div class="legend-line" style="background:#b71c1c"></div> P99
-                                </div>
+                                <template x-if="selectedModelIndices.length === 1">
+                                    <div style="display:flex; gap:10px;">
+                                        <div class="legend-item">
+                                            <div class="legend-dot" :style="`background:${selectedModel?.color}`"></div>
+                                            <span x-text="selectedModel?.provider + ' model'"></span>
+                                        </div>
+                                        <div class="legend-item">
+                                            <div class="legend-line" style="background:#2e7d32"></div> P50
+                                        </div>
+                                        <div class="legend-item">
+                                            <div class="legend-line" style="background:#1565c0"></div> P90
+                                        </div>
+                                        <div class="legend-item">
+                                            <div class="legend-line" style="background:#b71c1c"></div> P99
+                                        </div>
+                                    </div>
+                                </template>
+                                <template x-if="selectedModelIndices.length > 1">
+                                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                                        <template x-for="res in comparisonResults" :key="res.name">
+                                            <div class="legend-item">
+                                                <div class="legend-dot" :style="`background:${res.color}`"></div>
+                                                <span x-text="res.name"></span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
                             </div>
                         </div>
                         <div class="chart-body">
@@ -1070,8 +1139,8 @@
                         </div>
                     </div>
 
-                    <!-- Task + meta -->
-                    <div class="task-badge-row" x-show="results !== null" x-cloak>
+                    <!-- Task + meta (single model only) -->
+                    <div class="task-badge-row" x-show="results !== null && selectedModelIndices.length === 1" x-cloak>
                         <div>
                             <div class="task-type-label">Inferred Task Type</div>
                             <div class="task-type-value" x-text="results?.taskType"></div>
@@ -1084,8 +1153,8 @@
                         <div class="task-meta">Runs: <strong x-text="simulations.toLocaleString()"></strong></div>
                     </div>
 
-                    <!-- Projections -->
-                    <div class="projections-row" x-show="results !== null" x-cloak>
+                    <!-- Projections (single model only) -->
+                    <div class="projections-row" x-show="results !== null && selectedModelIndices.length === 1" x-cloak>
                         <div class="proj-cell">
                             <div class="proj-label">Daily 24h @ P90</div>
                             <div class="proj-value" x-text="`$${(results?.p90 * 24).toFixed(2)}`"></div>
@@ -1142,7 +1211,7 @@
                             <template x-for="m in models" :key="m.name">
                                 <tr>
                                     <td x-text="m.name"></td>
-                                    <td x-text="m.provider.charAt(0).toUpperCase() + m.provider.slice(1)"></td>
+                                    <td x-text="m.provider === 'openai' ? 'OpenAI' : m.provider === 'google' ? 'Google' : m.provider === 'zhipu' ? 'Z.ai / Zhipu' : m.provider === 'qwen' ? 'Alibaba / Qwen' : m.provider.charAt(0).toUpperCase() + m.provider.slice(1)"></td>
                                     <td x-text="m.tier"></td>
                                     <td class="money" x-text="`$${m.input.toFixed(2)}`"></td>
                                     <td class="money" x-text="`$${m.output.toFixed(2)}`"></td>
@@ -1152,10 +1221,7 @@
                         </tbody>
                     </table>
                     <div class="spec-note">
-                        <strong>Notes:</strong> GPT-5.4 cache cost estimated at 10% of input (not separately published).
-                        Gemini 3 Flash is used as a proxy for 3.1 Flash (not yet GA). Gemini 3.1 Pro rates apply for
-                        contexts ≤200K tokens. Reasoning/thinking tokens are billed at output rates and not modelled
-                        separately — see §5.
+                        <strong>Notes:</strong> Caching discounts are typically 90% (e.g., OpenAI GPT-5.x, Anthropic Claude 4.8, Google Gemini, Qwen). GLM-5.2 prompt caching is automatic with hits at $0.26/1M. Reasoning/thinking tokens are billed at output rates and not modelled separately — see §5.
                     </div>
                 </div>
 
@@ -1278,17 +1344,23 @@
                     openai: '#2e7d32',
                     anthropic: '#bf4a00',
                     google: '#1565c0',
+                    zhipu: '#db2777',
+                    qwen: '#7c3aed',
                 },
 
                 models: [
+                    { name: 'GPT-5.5', tier: 'Reasoning', provider: 'openai', input: 5.00, output: 30.00, cache: 0.50 },
                     { name: 'GPT-5.4', tier: 'Pro', provider: 'openai', input: 2.50, output: 15.00, cache: 0.25 },
                     { name: 'GPT-5.4 mini', tier: 'Flash', provider: 'openai', input: 0.75, output: 4.50, cache: 0.08 },
-                    { name: 'Claude Opus 4.6', tier: 'Reasoning', provider: 'anthropic', input: 5.00, output: 25.00, cache: 0.50 },
-                    { name: 'Claude Sonnet 4.6', tier: 'Pro', provider: 'anthropic', input: 3.00, output: 15.00, cache: 0.30 },
-                    { name: 'Gemini 3.1 Pro', tier: 'Pro', provider: 'google', input: 2.00, output: 12.00, cache: 0.20 },
-                    { name: 'Gemini 3 Flash', tier: 'Flash', provider: 'google', input: 0.50, output: 3.00, cache: 0.05 },
+                    { name: 'Claude Opus 4.8', tier: 'Reasoning', provider: 'anthropic', input: 5.00, output: 25.00, cache: 0.50 },
+                    { name: 'Claude Sonnet 4.8', tier: 'Pro', provider: 'anthropic', input: 3.00, output: 15.00, cache: 0.30 },
+                    { name: 'GLM-5.2', tier: 'Pro', provider: 'zhipu', input: 1.40, output: 4.40, cache: 0.26 },
+                    { name: 'Qwen 3.6 27B', tier: 'Pro', provider: 'qwen', input: 0.29, output: 3.17, cache: 0.29 },
+                    { name: 'Qwen 3.6 25bA3b', tier: 'Flash', provider: 'qwen', input: 0.07, output: 0.27, cache: 0.00 },
+                    { name: 'Gemini 3.5 Flash', tier: 'Flash', provider: 'google', input: 1.50, output: 9.00, cache: 0.15 },
                 ],
-                selectedModelIndex: 0,
+                selectedModelIndices: [0],
+                comparisonResults: [],
                 simulations: 1000,
 
                 latMin: 2, latMax: 10,
@@ -1303,8 +1375,30 @@
                 prevChartMax: null,
 
                 get selectedModel() {
-                    const m = this.models[this.selectedModelIndex];
+                    const m = this.models[this.selectedModelIndices[0]];
                     return { ...m, color: this.PROVIDER_COLOR[m.provider] };
+                },
+
+                isSelected(i) {
+                    return this.selectedModelIndices.includes(i);
+                },
+
+                selectCard(i, event) {
+                    if (event.target.tagName !== 'INPUT') {
+                        this.selectedModelIndices = [i];
+                        this.scheduleRun();
+                    }
+                },
+
+                toggleCompare(i) {
+                    if (this.selectedModelIndices.includes(i)) {
+                        if (this.selectedModelIndices.length > 1) {
+                            this.selectedModelIndices = this.selectedModelIndices.filter(idx => idx !== i);
+                        }
+                    } else {
+                        this.selectedModelIndices.push(i);
+                    }
+                    this.scheduleRun();
                 },
 
                 init() {
@@ -1344,109 +1438,157 @@
                     this.running = true;
 
                     setTimeout(() => {
-                        const costs = [];
-                        let totalLat = 0, totalCallCost = 0;
-                        const m = this.selectedModel;
+                        const comparisonResults = [];
+                        
+                        this.selectedModelIndices.forEach(idx => {
+                            const m = this.models[idx];
+                            const providerColor = this.PROVIDER_COLOR[m.provider];
+                            const costs = [];
+                            let totalLat = 0, totalCallCost = 0;
 
-                        for (let i = 0; i < this.simulations; i++) {
-                            const lat = this.sample(this.latMin, this.latMax);
-                            const dc = this.sample(this.dcMin, this.dcMax) / 100;
-                            // Log-uniform sampling: gives equal weight to each order of magnitude
-                            const ctx = Math.exp(this.sample(Math.log(this.ctxMin), Math.log(this.ctxMax)));
-                            const out = this.sample(this.outMin, this.outMax);
-                            const cache = this.sample(this.cacheMin, this.cacheMax) / 100;
+                            for (let i = 0; i < this.simulations; i++) {
+                                const lat = this.sample(this.latMin, this.latMax);
+                                const dc = this.sample(this.dcMin, this.dcMax) / 100;
+                                // Log-uniform sampling: gives equal weight to each order of magnitude
+                                const ctx = Math.exp(this.sample(Math.log(this.ctxMin), Math.log(this.ctxMax)));
+                                const out = this.sample(this.outMin, this.outMax);
+                                const cache = this.sample(this.cacheMin, this.cacheMax) / 100;
 
-                            totalLat += lat;
-                            const ctxCached = ctx * cache;
-                            const ctxFresh = ctx - ctxCached;
-                            const callCost = (ctxFresh * m.input + ctxCached * m.cache + out * m.output) / 1e6;
-                            totalCallCost += callCost;
-                            costs.push(callCost * (3600 / lat) * dc);
+                                totalLat += lat;
+                                const ctxCached = ctx * cache;
+                                const ctxFresh = ctx - ctxCached;
+                                const callCost = (ctxFresh * m.input + ctxCached * m.cache + out * m.output) / 1e6;
+                                totalCallCost += callCost;
+                                costs.push(callCost * (3600 / lat) * dc);
+                            }
+
+                            costs.sort((a, b) => a - b);
+                            const n = costs.length;
+                            const sum = costs.reduce((a, b) => a + b, 0);
+                            const mean = sum / n;
+                            const p50 = costs[Math.floor(n * 0.50)];
+                            const p90 = costs[Math.floor(n * 0.90)];
+                            const p99 = costs[Math.floor(n * 0.99)];
+                            const avgLat = totalLat / n;
+                            const meanCallCost = totalCallCost / n;
+
+                            let taskType = 'Deep Reasoning (Strategic Planning, CoT)';
+                            if (avgLat < 3.5) taskType = 'Fast Interactions — Chat / Commands';
+                            else if (avgLat <= 8) taskType = 'Standard Tasks — Synthesis, Data Analysis';
+                            else if (avgLat <= 14) taskType = 'Complex Tasks — Coding, Reasoning';
+
+                            comparisonResults.push({
+                                name: m.name,
+                                provider: m.provider,
+                                color: providerColor,
+                                mean: mean.toFixed(2),
+                                p50: p50.toFixed(2),
+                                p90: p90.toFixed(2),
+                                p99: p99.toFixed(2),
+                                taskType,
+                                avgLatency: avgLat.toFixed(1),
+                                meanCallCost: meanCallCost < 0.0001 ? meanCallCost.toExponential(2) : meanCallCost.toFixed(4),
+                                costs: costs,
+                                rawP50: p50, rawP90: p90, rawP99: p99,
+                                rawMin: costs[0], rawMax: costs[n - 1]
+                            });
+                        });
+
+                        this.comparisonResults = comparisonResults;
+
+                        if (this.selectedModelIndices.length === 1) {
+                            const singleRes = comparisonResults[0];
+                            this.results = {
+                                mean: singleRes.mean,
+                                p50: singleRes.p50,
+                                p90: singleRes.p90,
+                                p99: singleRes.p99,
+                                taskType: singleRes.taskType,
+                                avgLatency: singleRes.avgLatency,
+                                meanCallCost: singleRes.meanCallCost,
+                                rawP50: singleRes.rawP50, rawP90: singleRes.rawP90, rawP99: singleRes.rawP99,
+                                rawMin: singleRes.rawMin, rawMax: singleRes.rawMax,
+                            };
+                        } else {
+                            this.results = null;
                         }
 
-                        costs.sort((a, b) => a - b);
-                        const n = costs.length;
-                        const sum = costs.reduce((a, b) => a + b, 0);
-                        const mean = sum / n;
-                        const p50 = costs[Math.floor(n * 0.50)];
-                        const p90 = costs[Math.floor(n * 0.90)];
-                        const p99 = costs[Math.floor(n * 0.99)];
-                        const avgLat = totalLat / n;
-                        const meanCallCost = totalCallCost / n;
-
-                        let taskType = 'Deep Reasoning (Strategic Planning, CoT)';
-                        if (avgLat < 3.5) taskType = 'Fast Interactions — Chat / Commands';
-                        else if (avgLat <= 8) taskType = 'Standard Tasks — Synthesis, Data Analysis';
-                        else if (avgLat <= 14) taskType = 'Complex Tasks — Coding, Reasoning';
-
-                        this.results = {
-                            mean: mean.toFixed(2),
-                            p50: p50.toFixed(2),
-                            p90: p90.toFixed(2),
-                            p99: p99.toFixed(2),
-                            taskType,
-                            avgLatency: avgLat.toFixed(1),
-                            meanCallCost: meanCallCost < 0.0001 ? meanCallCost.toExponential(2) : meanCallCost.toFixed(4),
-                            rawP50: p50, rawP90: p90, rawP99: p99,
-                            rawMin: costs[0], rawMax: costs[n - 1],
-                        };
-
                         this.running = false;
-                        this.$nextTick(() => this.renderChart(costs));
+                        this.$nextTick(() => this.renderChart());
                     }, 10);
                 },
 
-                renderChart(costs) {
+                renderChart() {
                     if (this.chartInstance) { this.chartInstance.destroy(); this.chartInstance = null; }
 
                     const canvas = document.getElementById('histogramChart');
                     if (!canvas) return;
 
                     const BINS = 50;
-                    const mn = costs[0];
-                    const mx = costs[costs.length - 1];
-                    const binSize = (mx - mn) / BINS || 0.001;
-
-                    /* Build histogram as percentages */
-                    const hist = new Array(BINS).fill(0);
-                    costs.forEach(c => {
-                        let idx = Math.floor((c - mn) / binSize);
-                        if (idx >= BINS) idx = BINS - 1;
-                        hist[idx]++;
+                    
+                    let globalMin = Infinity;
+                    let globalMax = -Infinity;
+                    this.comparisonResults.forEach(res => {
+                        const mn = res.costs[0];
+                        const mx = res.costs[res.costs.length - 1];
+                        if (mn < globalMin) globalMin = mn;
+                        if (mx > globalMax) globalMax = mx;
                     });
-                    const pct = hist.map(v => parseFloat(((v / costs.length) * 100).toFixed(2)));
+                    
+                    const binSize = (globalMax - globalMin) / BINS || 0.001;
+                    const labels = new Array(BINS).fill(0).map((_, i) => (globalMin + (i + 0.5) * binSize).toFixed(3));
 
-                    /* Detect scale change → flash */
-                    const newMax = Math.max(...pct);
-                    if (this.prevChartMax !== null && Math.abs(newMax - this.prevChartMax) / (this.prevChartMax || 1) > 0.15) {
-                        this._flashScale();
-                    }
-                    this.prevChartMax = newMax;
+                    const datasets = this.comparisonResults.map(res => {
+                        const hist = new Array(BINS).fill(0);
+                        res.costs.forEach(c => {
+                            let idx = Math.floor((c - globalMin) / binSize);
+                            if (idx >= BINS) idx = BINS - 1;
+                            hist[idx]++;
+                        });
+                        const pct = hist.map(v => parseFloat(((v / res.costs.length) * 100).toFixed(2)));
 
-                    const labels = hist.map((_, i) => (mn + (i + 0.5) * binSize).toFixed(3));
-                    const providerColor = this.PROVIDER_COLOR[this.selectedModel.provider];
-
-                    /* Shade bars: lighter where frequency lower, solid at peak */
-                    const barColors = pct.map(v => {
-                        const t = v / newMax; // 0..1
-                        // blend from very pale version of the provider colour → full colour
-                        return this._blendToWhite(providerColor, 1 - t * 0.85);
-                    });
-
-                    const ctx2d = canvas.getContext('2d');
-                    this.chartInstance = new Chart(ctx2d, {
-                        type: 'bar',
-                        data: {
-                            labels,
-                            datasets: [{
+                        if (this.comparisonResults.length > 1) {
+                            return {
+                                label: res.name,
+                                data: pct,
+                                type: 'bar',
+                                backgroundColor: res.color,
+                                borderWidth: 0,
+                                borderRadius: 1,
+                                categoryPercentage: 0.8,
+                                barPercentage: 0.9,
+                            };
+                        } else {
+                            const barColors = pct.map(v => {
+                                const t = v / Math.max(...pct);
+                                return this._blendToWhite(res.color, 1 - t * 0.85);
+                            });
+                            return {
                                 label: '% of scenarios',
                                 data: pct,
+                                type: 'bar',
                                 backgroundColor: barColors,
                                 borderWidth: 0,
                                 borderRadius: 1,
                                 categoryPercentage: 1.0,
                                 barPercentage: 1.0,
-                            }]
+                            };
+                        }
+                    });
+
+                    const newMax = Math.max(...datasets.flatMap(d => d.data));
+                    if (this.prevChartMax !== null && Math.abs(newMax - this.prevChartMax) / (this.prevChartMax || 1) > 0.15) {
+                        this._flashScale();
+                    }
+                    this.prevChartMax = newMax;
+
+                    const ctx2d = canvas.getContext('2d');
+
+                    this.chartInstance = new Chart(ctx2d, {
+                        type: 'bar',
+                        data: {
+                            labels,
+                            datasets
                         },
                         options: {
                             responsive: true,
@@ -1482,7 +1624,7 @@
                                 tooltip: {
                                     callbacks: {
                                         title: items => `~$${parseFloat(labels[items[0].dataIndex]).toFixed(3)}/hr`,
-                                        label: item => `${item.raw}% of scenarios`,
+                                        label: item => `${item.dataset.label}: ${item.raw}% of scenarios`,
                                     },
                                     backgroundColor: '#2c1f1a',
                                     titleFont: { family: "'JetBrains Mono',monospace", size: 12 },
@@ -1493,10 +1635,9 @@
                         plugins: [{
                             id: 'percentileLines',
                             afterDraw: (chart) => {
+                                if (this.selectedModelIndices.length > 1) return;
                                 const { ctx: c, chartArea: { left, right, top, bottom }, scales: { x } } = chart;
-                                const { rawP50, rawP99 } = this.results;
-                                // include rawP90 too
-                                const rawP90 = this.results.rawP90;
+                                const { rawP50, rawP90, rawP99 } = this.results;
 
                                 const lines = [
                                     { val: rawP50, color: '#2e7d32', label: 'P50', dash: [5, 4] },
@@ -1506,7 +1647,7 @@
 
                                 c.save();
                                 lines.forEach(({ val, color, label, dash }) => {
-                                    const binIdx = Math.min(Math.floor((val - mn) / binSize), BINS - 1);
+                                    const binIdx = Math.min(Math.floor((val - globalMin) / binSize), BINS - 1);
                                     const px = x.getPixelForValue(binIdx + 0.5);
                                     if (px < left || px > right) return;
 
