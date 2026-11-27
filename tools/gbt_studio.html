@@ -1,0 +1,2191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GBT Studio</title>
+<meta name="description" content="GBT Studio: geometrically nonlinear GBT (Implicit Corotational Method) for single thin-walled beams, in the browser.">
+<style>
+:root{--ink:#111827;--ink2:#374151;--mut:#6B7280;--line:#E5E7EB;--bg:#F3F4F6;--pri:#1D4ED8;--priL:#EFF6FF;--load:#C2410C;--ok:#047857;--warn:#B45309;--err:#B91C1C;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font:14px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg);display:flex;flex-direction:column;height:100vh;overflow:hidden}
+button{font:inherit;cursor:pointer;color:inherit}
+input,select{font:inherit;color:var(--ink)}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:14px;padding:8px 16px;background:#111827;color:#F9FAFB}
+header .brand{font-weight:700;font-size:16px;letter-spacing:.2px}
+header .brand small{font-weight:400;color:#9CA3AF;margin-left:6px;font-size:12px}
+header nav{display:flex;gap:4px}
+header nav button{padding:7px 14px;border-radius:6px;border:0;background:transparent;color:#D1D5DB;font-size:14px}
+header nav button.on{background:var(--pri);color:#fff;font-weight:600}
+header nav button:disabled{opacity:.4;cursor:default}
+header .sp{flex:1}
+header select{padding:6px 8px;border-radius:6px;border:1px solid #4B5563;background:#1F2937;color:#F9FAFB;font-size:13px}
+header label{display:flex;align-items:center;gap:8px;font-size:13px;color:#D1D5DB}
+.pill{font-size:12px;padding:4px 10px;border-radius:999px;background:#1F2937;color:#D1D5DB;font-family:var(--mono)}
+.pill.run{background:#1E3A8A;color:#DBEAFE}.pill.err{background:#7F1D1D;color:#FEE2E2}.pill.ok{background:#064E3B;color:#D1FAE5}
+.tab{display:none;flex:1;gap:12px;padding:12px;min-height:0;overflow:auto}
+.tab.on{display:flex;flex-wrap:wrap;align-items:stretch}
+.card{background:#fff;border:1px solid var(--line);border-radius:8px}
+aside.card{flex:1 1 250px;max-width:300px;padding:14px;display:flex;flex-direction:column;gap:10px;overflow:auto}
+aside.card.wide{max-width:360px;flex-basis:320px}
+main.card{flex:999 1 520px;min-width:0;display:flex;flex-direction:column;min-height:520px}
+.h{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:#4B5563;margin-top:4px}
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line)}
+.bar .t{font-weight:600}
+.muted{color:var(--mut);font-size:12.5px}
+.mono{font-family:var(--mono)}
+.btn{padding:7px 12px;border-radius:6px;border:1px solid #D1D5DB;background:#fff;font-size:13px}
+.btn:hover{background:#F9FAFB}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:#fff;font-weight:600}
+.btn.pri:hover{background:#1E40AF}
+.btn.danger{color:var(--err);border-color:#FCA5A5}
+.btn.sm{padding:4px 8px;font-size:12px}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.big{padding:11px 16px;font-size:15px;width:100%}
+.seg{display:flex;flex-wrap:wrap;gap:4px}
+.seg button{padding:6px 10px;border-radius:6px;border:1px solid #D1D5DB;background:#fff;font-size:12.5px}
+.seg button.on{border:2px solid var(--pri);background:var(--priL);color:#1E3A8A;padding:5px 9px;font-weight:600}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.pal{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;border-radius:6px;border:1px solid var(--line);background:#fff;min-height:58px;font-size:12px}
+.pal:hover{border-color:#93C5FD}
+.pal.on{border:2px solid var(--pri);background:var(--priL)}
+.scheme{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:#fff;text-align:left;font-size:12.5px;line-height:1.3}
+.scheme:hover{border-color:#93C5FD}
+.field{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--ink2)}
+.field input,.field select{padding:6px 8px;border:1px solid #D1D5DB;border-radius:6px;font-size:13px;width:100%}
+.row{display:flex;gap:8px;align-items:flex-end}
+.row>*{flex:1}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:12.5px}
+.kv span:nth-child(odd){color:var(--mut)}
+.kv span:nth-child(even){font-family:var(--mono);text-align:right}
+.note{font-size:12.5px;line-height:1.4;border-radius:6px;padding:8px 10px;background:#F9FAFB;border:1px solid var(--line);color:var(--ink2)}
+.note.warn{background:#FFFBEB;border-color:#FCD34D;color:#78350F}
+.note.err{background:#FEF2F2;border-color:#FCA5A5;color:#7F1D1D}
+.note.ok{background:#ECFDF5;border-color:#6EE7B7;color:#064E3B}
+.list{display:flex;flex-direction:column;gap:4px}
+.item{display:flex;align-items:center;gap:6px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-size:12.5px;background:#fff}
+.item.sel{border-color:#93C5FD;background:#F8FAFF}
+.item .grow{flex:1;min-width:0}
+.item .z{font-family:var(--mono);color:var(--mut);font-size:11.5px}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+table.nodes{width:100%;border-collapse:collapse;font-size:12px}
+table.nodes td,table.nodes th{padding:2px 3px;border-bottom:1px solid #F3F4F6;text-align:right}
+table.nodes th{color:var(--mut);font-weight:500}
+table.nodes input{width:100%;padding:3px 4px;border:1px solid transparent;border-radius:4px;font-family:var(--mono);font-size:12px;text-align:right;background:transparent}
+table.nodes input:hover{border-color:#E5E7EB}
+table.nodes input:focus{border-color:var(--pri);outline:none;background:#fff}
+table.nodes tr.sel td{background:var(--priL)}
+.modes{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px}
+.mode{border:1px solid var(--line);border-radius:6px;padding:2px;text-align:center;font-size:11px;color:var(--ink2)}
+.mode svg{width:100%;height:auto;display:block}
+.cvwrap{position:relative;flex:1;min-height:380px}
+.cvwrap canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.overlay{position:absolute;left:10px;bottom:8px;font-size:11.5px;color:var(--mut);pointer-events:none}
+.legend{position:absolute;right:12px;top:12px;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-size:11.5px;display:flex;flex-direction:column;gap:3px;min-width:150px}
+.legend .ramp{height:10px;border-radius:3px}
+.legend .ends{display:flex;justify-content:space-between;font-family:var(--mono)}
+.svgwrap{position:relative;flex:1;min-height:420px}
+#secsvg{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;user-select:none}
+.right3{flex:1 1 380px;max-width:520px;display:flex;flex-direction:column;gap:12px}
+.chartcard{padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.chartcard canvas{width:100%;height:240px;display:block}
+.modal-back{position:fixed;inset:0;background:rgba(17,24,39,.45);display:flex;align-items:center;justify-content:center;z-index:20;padding:16px}
+.modal{background:#fff;border-radius:10px;width:min(760px,100%);max-height:92vh;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.modal .mh{display:flex;align-items:center;gap:8px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.modal .mh .t{font-weight:700;font-size:16px}
+.modal .mb{padding:14px 18px;display:flex;flex-wrap:wrap;gap:16px}
+.modal .mf{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;padding:12px 18px;border-top:1px solid var(--line)}
+table.fix{border-collapse:collapse;width:100%;font-size:13px}
+table.fix td,table.fix th{padding:6px 8px;border-bottom:1px solid #F3F4F6}
+table.fix th{font-size:12px;color:var(--mut);font-weight:500;text-align:center}
+table.fix td.c{text-align:center}
+table.fix input{width:18px;height:18px}
+.runbanner{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding:8px 16px;background:#EFF6FF;border-bottom:1px solid #BFDBFE;font-size:13px;color:#1E3A8A}
+.runbanner.hidden{display:none}
+.runbanner .grow{flex:1;min-width:200px;display:flex;flex-direction:column;gap:4px}
+.runbanner .progress{height:6px;background:#DBEAFE}
+.spin{width:14px;height:14px;border:2px solid #93C5FD;border-top-color:#1D4ED8;border-radius:50%;animation:sp 0.9s linear infinite;flex:none}
+@keyframes sp{to{transform:rotate(360deg)}}
+body.running #tab1>*,body.running #tab2>*{pointer-events:none;opacity:.55;filter:grayscale(.4)}
+.blocker{position:fixed;inset:0;background:rgba(17,24,39,.55);z-index:40;display:flex;align-items:center;justify-content:center;padding:16px}
+.blocker .box{background:#fff;border-radius:10px;padding:22px 26px;max-width:440px;display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center}
+.blocker .spin{width:28px;height:28px;border-width:3px}
+.toast{position:fixed;right:16px;bottom:16px;background:#064E3B;color:#ECFDF5;padding:10px 14px;border-radius:8px;font-size:13px;z-index:30;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.progress{height:4px;background:#E5E7EB;border-radius:2px;overflow:hidden}
+.progress div{height:100%;background:var(--pri);transition:width .2s}
+input[type=range]{accent-color:var(--pri)}
+.kbd{font-family:var(--mono);font-size:11px;border:1px solid #D1D5DB;border-bottom-width:2px;border-radius:4px;padding:0 4px;background:#fff}
+@media (max-width:900px){aside.card{max-width:none}.right3{max-width:none}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">GBT Studio<small>GBT–ICM · exact rotator · Riks</small></div>
+  <nav aria-label="Steps">
+    <button data-act="tab" data-t="1" id="nav1">1 Section</button>
+    <button data-act="tab" data-t="2" id="nav2">2 Supports and loads</button>
+    <button data-act="tab" data-t="3" id="nav3">3 Results</button>
+  </nav>
+  <div class="sp"></div>
+  <label>Paper examples
+    <select id="exsel" data-chg="example">
+      <option value="">choose…</option>
+      <option value="t71">7.1 · rack, bending and shear</option>
+      <option value="t72">7.2 · stocky rack, distortion</option>
+      <option value="t73">7.3 · Z section, load on the flange</option>
+    </select>
+  </label>
+  <button class="btn sm" data-act="about" style="background:#1F2937;color:#F9FAFB;border-color:#4B5563">About · references</button>
+  <span class="pill" id="status">ready</span>
+</header>
+<div class="runbanner hidden" id="runBanner" role="status" aria-live="polite"></div>
+
+<!-- =============== TAB 1: SECTION =============== -->
+<section class="tab" id="tab1">
+  <aside class="card">
+    <div class="h">Starting sections</div>
+    <div class="list" id="libList"></div>
+    <div class="h">Material and thickness</div>
+    <div class="row">
+      <label class="field">t [mm]<input type="number" step="0.1" min="0.1" data-chg="secnum" data-k="t" id="in_t"></label>
+      <label class="field" style="flex:1.6">E [MPa]<input type="number" step="1000" data-chg="secnum" data-k="E" id="in_E"></label>
+      <label class="field">ν<input type="number" step="0.01" min="0" max="0.49" data-chg="secnum" data-k="nu" id="in_nu"></label>
+    </div>
+    <div class="h">Nodes (mid-line) <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:400" id="nodeCount"></span></div>
+    <div style="overflow:auto;max-height:360px"><table class="nodes" id="nodeTable"></table></div>
+  </aside>
+  <main class="card">
+    <div class="bar">
+      <span class="t" id="secTitle">Section</span>
+      <div class="sp" style="flex:1"></div>
+      <button class="btn sm" data-act="addEnd" data-e="0">+ node at start</button>
+      <button class="btn sm" data-act="addEnd" data-e="1">+ node at end</button>
+      <button class="btn sm danger" data-act="delNode" id="btnDel">Delete node</button>
+      <button class="btn sm" data-act="undo" id="btnUndo">Undo</button>
+      <label class="muted" style="display:flex;gap:6px;align-items:center">grid
+        <select data-chg="snap" id="snapSel"><option value="0.5">0.5</option><option value="1">1</option><option value="2.5">2.5</option><option value="5">5</option></select> mm</label>
+    </div>
+    <div class="svgwrap"><svg id="secsvg" role="img" aria-label="Section editor"></svg></div>
+    <div class="bar" style="border-top:1px solid var(--line);border-bottom:0">
+      <span class="muted">Drag the nodes · click on a wall to insert a node · click on a node to select it, <span class="kbd">Del</span> to delete it · wheel to zoom</span>
+    </div>
+  </main>
+  <aside class="card wide">
+    <div class="h">Properties</div>
+    <div id="secProps"></div>
+    <div class="h">GBT deformation modes</div>
+    <div class="modes" id="modeGrid"></div>
+    <button class="btn sm" data-act="allModes" id="btnAllModes" style="align-self:flex-start">show all</button>
+    <button class="btn pri big" data-act="tab" data-t="2">Next: supports and loads →</button>
+  </aside>
+</section>
+
+<!-- =============== TAB 2: MODEL =============== -->
+<section class="tab" id="tab2">
+  <aside class="card">
+    <div class="h">Quick schemes</div>
+    <div class="list" id="schemeList"></div>
+    <div class="h">Predefined supports <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:400">· at the selected section</span></div>
+    <div class="grid2" id="supPal"></div>
+    <div class="h">Predefined loads</div>
+    <div class="grid2" id="loadPal"></div>
+    <div class="muted">Pick a scheme, or select a section (click on the beam, z slider or A · L/2 · B) and apply a support or a load. Each load opens its own dialog.</div>
+  </aside>
+  <main class="card">
+    <div class="bar">
+      <span class="t" id="beamTitle"></span>
+      <div style="flex:1"></div>
+      <label class="muted" style="display:flex;align-items:center;gap:6px">L [mm] <input type="number" min="10" step="50" style="width:84px" class="btn sm mono" data-chg="beam" data-k="L" id="in_L"></label>
+      <label class="muted" style="display:flex;align-items:center;gap:6px">elements <input type="number" min="1" max="400" step="1" style="width:64px" class="btn sm mono" data-chg="beam" data-k="ne" id="in_ne"></label>
+    </div>
+    <div class="bar">
+      <label class="muted" style="display:flex;align-items:center;gap:8px">Section z
+        <input type="range" min="0" step="1" id="zrange" data-inp="zrange" style="width:200px">
+        <span class="mono" id="zlab" style="min-width:110px"></span></label>
+      <div class="seg" id="zquick"></div>
+      <div style="flex:1"></div>
+      <span class="muted" id="leInfo"></span>
+    </div>
+    <div class="cvwrap"><canvas id="cv2"></canvas><div class="overlay">drag to rotate · <span class="kbd">Shift</span>+drag to pan · wheel to zoom · click on the beam to select a section</div></div>
+  </main>
+  <aside class="card wide">
+    <div class="h" id="hereTitle">At the selected section</div>
+    <div id="hereBox"></div>
+    <div class="h">Supports</div>
+    <div class="list" id="supList"></div>
+    <div class="h">Loads <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:400">· proportional to λ</span></div>
+    <div class="list" id="loadList"></div>
+    <div class="h">Analysis (Riks arc-length)</div>
+    <div class="row">
+      <label class="field">λ max<input type="number" step="0.1" data-chg="riks" data-k="lamMax" id="in_lamMax"></label>
+      <label class="field">max steps<input type="number" step="10" min="1" data-chg="riks" data-k="nsteps" id="in_nsteps"></label>
+    </div>
+    <div class="row">
+      <label class="field">initial Δλ<input type="number" step="0.01" min="0.0001" data-chg="riks" data-k="dl0" id="in_dl0"></label>
+      <label class="field">max step (× initial)<input type="number" step="0.5" min="0.1" data-chg="riks" data-k="dsRel" id="in_dsRel"></label>
+    </div>
+    <div class="row">
+      <label class="field">Perturbation<select data-chg="imp" data-k="kind" id="in_impk">
+        <option value="none">none</option><option value="auto">lateral, weak axis (auto)</option><option value="x">lateral X</option><option value="y">lateral Y</option><option value="t">torsional</option></select></label>
+      <label class="field">magnitude [‰ of the load]<input type="number" step="0.5" min="0" data-chg="imp" data-k="eps" id="in_impe"></label>
+    </div>
+    <div class="muted" id="impNote"></div>
+    <div id="checkBox"></div>
+    <div id="estBox"></div>
+    <button class="btn pri big" data-act="solve" id="btnSolve">Solve ▶</button>
+  </aside>
+</section>
+
+<!-- =============== TAB 3: RESULTS =============== -->
+<section class="tab" id="tab3">
+  <aside class="card">
+    <div class="h">Analysis</div>
+    <div id="runBox"></div>
+    <div class="h">Step</div>
+    <input type="range" min="0" max="0" step="1" id="stepRange" data-inp="step">
+    <div class="kv" id="stepKv"></div>
+    <label class="muted" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="follow" data-chg="follow" checked> follow the last step</label>
+    <div class="h">3D view</div>
+    <label class="field">Colour
+      <select data-chg="color" id="colorSel">
+        <option value="u">|u| displacement</option>
+        <option value="szz">σzz membrane (recovered)</option>
+        <option value="stop">σzz face +</option>
+        <option value="sbot">σzz face −</option>
+        <option value="vm">σ von Mises (max of faces)</option>
+        <option value="none">none (grey)</option>
+      </select></label>
+    <label class="field">Deformation scale <span class="mono" id="scaleLab"></span>
+      <input type="range" min="0" max="3" step="0.01" value="1" id="scaleRange" data-inp="scale"></label>
+    <div class="seg" id="scaleQuick"></div>
+    <label class="muted" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="showBC" data-chg="showBC" checked> show supports and loads</label>
+    <label class="muted" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="showUndef" data-chg="showUndef" checked> undeformed outline</label>
+    <div class="muted">Click on a node of the deformed shape for the λ–u plot.</div>
+  </aside>
+  <main class="card">
+    <div class="bar"><span class="t" id="resTitle">Deformed shape 3D</span><div style="flex:1"></div><span class="muted" id="resInfo"></span></div>
+    <div class="cvwrap"><canvas id="cv3"></canvas><div class="legend" id="legend"></div><div class="overlay">drag to rotate · <span class="kbd">Shift</span>+drag to pan · wheel to zoom · click on a node to select it</div></div>
+  </main>
+  <div class="right3">
+    <div class="card chartcard">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="h" style="margin:0">Load–displacement curve</span><div style="flex:1"></div><div class="seg" id="compSeg"></div><button class="btn sm" data-act="csv">CSV</button></div>
+      <div class="muted" id="pickLab"></div>
+      <canvas id="cvLam"></canvas>
+    </div>
+    <div class="card chartcard">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="h" style="margin:0">Generalized stresses along z</span></div>
+      <div class="row">
+        <label class="field">mode<select data-chg="genMode" id="genMode"></select></label>
+        <label class="field">component<select data-chg="genComp" id="genComp"></select></label>
+      </div>
+      <canvas id="cvGen"></canvas>
+      <div class="muted" id="genNote"></div>
+    </div>
+  </div>
+</section>
+
+<div id="modalRoot"></div>
+
+<script type="text/plain" id="lib-linalg">// Small dense linear algebra on plain JS arrays (number[][]), for the cross-section preprocessing.
+// Sizes are small (a few hundred at most), so clarity beats speed here.
+
+export const zeros = (r, c) => Array.from({ length: r }, () => new Array(c).fill(0));
+export const eye = (n) => { const I = zeros(n, n); for (let i = 0; i < n; i++) I[i][i] = 1; return I; };
+export const T = (A) => A[0].map((_, j) => A.map((r) => r[j]));
+export const matmul = (A, B) => {
+  const n = A.length, m = B[0].length, k = B.length, C = zeros(n, m);
+  for (let i = 0; i < n; i++) { const Ai = A[i], Ci = C[i];
+    for (let p = 0; p < k; p++) { const a = Ai[p]; if (a === 0) continue; const Bp = B[p]; for (let j = 0; j < m; j++) Ci[j] += a * Bp[j]; } }
+  return C;
+};
+export const matvec = (A, x) => A.map((r) => r.reduce((s, v, j) => s + v * x[j], 0));
+export const dot = (a, b) => a.reduce((s, v, i) => s + v * b[i], 0);
+export const add = (A, B, s = 1) => A.map((r, i) => r.map((v, j) => v + s * B[i][j]));
+export const scale = (A, s) => A.map((r) => r.map((v) => v * s));
+export const col = (A, j) => A.map((r) => r[j]);
+export const fromCols = (cols) => T(cols);
+
+/** LU with partial pivoting; returns solver for multiple right-hand sides. */
+export function lu(A0) {
+  const n = A0.length, A = A0.map((r) => r.slice()), piv = [...Array(n).keys()];
+  for (let k = 0; k < n; k++) {
+    let p = k, mx = Math.abs(A[k][k]);
+    for (let i = k + 1; i < n; i++) if (Math.abs(A[i][k]) > mx) { mx = Math.abs(A[i][k]); p = i; }
+    if (mx === 0) throw new Error("singular matrix in lu");
+    if (p !== k) { [A[p], A[k]] = [A[k], A[p]]; [piv[p], piv[k]] = [piv[k], piv[p]]; }
+    for (let i = k + 1; i < n; i++) { const f = (A[i][k] /= A[k][k]); if (f === 0) continue; for (let j = k + 1; j < n; j++) A[i][j] -= f * A[k][j]; }
+  }
+  return (b) => {
+    const x = piv.map((i) => b[i]);
+    for (let i = 0; i < n; i++) for (let j = 0; j < i; j++) x[i] -= A[i][j] * x[j];
+    for (let i = n - 1; i >= 0; i--) { for (let j = i + 1; j < n; j++) x[i] -= A[i][j] * x[j]; x[i] /= A[i][i]; }
+    return x;
+  };
+}
+export const solve = (A, b) => lu(A)(b);
+export function inv(A) { const s = lu(A), n = A.length; return T(eye(n).map((e) => s(e))); }
+
+/** Symmetric eigen-decomposition (cyclic Jacobi). Returns { w: ascending eigenvalues, V: columns = eigenvectors }. */
+export function eigSym(A0) {
+  const n = A0.length, A = A0.map((r) => r.slice()), V = eye(n);
+  for (let sweep = 0; sweep < 100; sweep++) {
+    let off = 0; for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) off += A[i][j] * A[i][j];
+    let tot = 0; for (let i = 0; i < n; i++) tot += A[i][i] * A[i][i];
+    if (off <= 1e-30 * (tot + off) || off === 0) break;
+    for (let p = 0; p < n; p++) for (let q = p + 1; q < n; q++) {
+      const apq = A[p][q]; if (Math.abs(apq) < 1e-300) continue;
+      const th = (A[q][q] - A[p][p]) / (2 * apq), t = Math.sign(th || 1) / (Math.abs(th) + Math.sqrt(th * th + 1));
+      const c = 1 / Math.sqrt(t * t + 1), s = t * c;
+      for (let k = 0; k < n; k++) { const akp = A[k][p], akq = A[k][q]; A[k][p] = c * akp - s * akq; A[k][q] = s * akp + c * akq; }
+      for (let k = 0; k < n; k++) { const apk = A[p][k], aqk = A[q][k]; A[p][k] = c * apk - s * aqk; A[q][k] = s * apk + c * aqk; }
+      for (let k = 0; k < n; k++) { const vkp = V[k][p], vkq = V[k][q]; V[k][p] = c * vkp - s * vkq; V[k][q] = s * vkp + c * vkq; }
+    }
+  }
+  const idx = [...Array(n).keys()].sort((a, b) => A[a][a] - A[b][b]);
+  return { w: idx.map((i) => A[i][i]), V: V.map((r) => idx.map((i) => r[i])) };
+}
+
+/** Cholesky A = L L^T (lower). */
+export function cholesky(A) {
+  const n = A.length, L = zeros(n, n);
+  for (let i = 0; i < n; i++) for (let j = 0; j <= i; j++) {
+    let s = A[i][j]; for (let k = 0; k < j; k++) s -= L[i][k] * L[j][k];
+    if (i === j) { if (s <= 0) throw new Error("cholesky: not positive definite"); L[i][i] = Math.sqrt(s); } else L[i][j] = s / L[j][j];
+  }
+  return L;
+}
+const lowerSolveMat = (L, B) => { // L X = B
+  const n = L.length, m = B[0].length, X = zeros(n, m);
+  for (let c = 0; c < m; c++) for (let i = 0; i < n; i++) { let s = B[i][c]; for (let k = 0; k < i; k++) s -= L[i][k] * X[k][c]; X[i][c] = s / L[i][i]; }
+  return X;
+};
+/** Generalized symmetric-definite problem A v = w B v; eigenvectors B-orthonormal, ascending w. */
+export function eighGen(A, B) {
+  const L = cholesky(B), Y = lowerSolveMat(L, A), C = T(lowerSolveMat(L, T(Y))); // L^-1 A L^-T
+  const Cs = C.map((r, i) => r.map((v, j) => 0.5 * (v + C[j][i])));
+  const { w, V } = eigSym(Cs);
+  const n = A.length, Vt = zeros(n, n); // solve L^T X = V
+  for (let c = 0; c < n; c++) for (let i = n - 1; i >= 0; i--) { let s = V[i][c]; for (let k = i + 1; k < n; k++) s -= L[k][i] * Vt[k][c]; Vt[i][c] = s / L[i][i]; }
+  return { w, V: Vt };
+}
+
+/** Orthonormal basis of the null space of M (rows m x cols n), as columns. */
+export function nullSpace(M) {
+  const G = matmul(T(M), M), { w, V } = eigSym(G), tol = 1e-12 * Math.max(...w.map(Math.abs), 1e-300);
+  const keep = w.map((v, i) => [v, i]).filter(([v]) => v <= tol).map(([, i]) => i);
+  return V.map((r) => keep.map((i) => r[i]));
+}
+
+/** Minimum-norm least squares for a symmetric (possibly singular) system K x = b, via eigen-decomposition. */
+export function pinvSymSolve(K, b) {
+  const { w, V } = eigSym(K), n = K.length, mx = Math.max(...w.map(Math.abs)), tol = n * 2.22e-16 * mx;
+  const x = new Array(n).fill(0);
+  for (let k = 0; k < n; k++) { if (Math.abs(w[k]) <= tol) continue; let c = 0; for (let i = 0; i < n; i++) c += V[i][k] * b[i]; c /= w[k]; for (let i = 0; i < n; i++) x[i] += c * V[i][k]; }
+  return x;
+}
+
+/** Least squares with full column rank: (A^T A) x = A^T b. */
+export function lstsqFull(A, b) { const At = T(A); return solve(matmul(At, A), matvec(At, b)); }
+
+export function blockDiag(blocks) {
+  const r = blocks.reduce((s, B) => s + B.length, 0), c = blocks.reduce((s, B) => s + B[0].length, 0), M = zeros(r, c);
+  let i0 = 0, j0 = 0;
+  for (const B of blocks) { B.forEach((row, i) => row.forEach((v, j) => { M[i0 + i][j0 + j] = v; })); i0 += B.length; j0 += B[0].length; }
+  return M;
+}
+
+/** Gauss-Legendre points and weights mapped to [0,1]. */
+export function gauss01(k) {
+  // Golub-Welsch on the Jacobi matrix of Legendre polynomials.
+  const J = zeros(k, k);
+  for (let i = 1; i < k; i++) { const b = i / Math.sqrt(4 * i * i - 1); J[i][i - 1] = b; J[i - 1][i] = b; }
+  const { w, V } = eigSym(J);
+  return { x: w.map((v) => 0.5 * (v + 1)), w: V[0].map((v) => v * v) }; // weights 2 v0^2, mapped *0.5
+}
+</script>
+<script type="text/plain" id="lib-section">// GBT-ICM cross-section and element matrices (port of gbt_paper.py: PaperSection, stress_modes, DN, element_matrices).
+// Ruggerini, Madeo, Goncalves, Camotim, Ubertini, de Miranda, IJSS 163 (2019). Unbranched open sections.
+import { zeros, eye, T, matmul, matvec, dot, add, scale, inv, eighGen, nullSpace, pinvSymSolve, lstsqFull, blockDiag, gauss01, eigSym } from "./linalg.js";
+
+export class Section {
+  constructor(xy, t, { E = 210000, nu = 0.3, ngs = 6 } = {}) {
+    this.xy = xy.map((p) => [p[0], p[1]]);
+    this.n = this.xy.length;
+    this.walls = [...Array(this.n - 1).keys()].map((k) => [k, k + 1]);
+    this.t = t; this.E = E; this.nu = nu; this.G = E / (2 * (1 + nu)); this.Eb = E / (1 - nu * nu);
+    this._geometry(); this._modes(); this._sectionMatrices(ngs);
+  }
+
+  _geometry() {
+    const n = this.n, xy = this.xy;
+    this.tau = []; this.nrm = []; this.b = [];
+    for (const [a, c] of this.walls) {
+      const d = [xy[c][0] - xy[a][0], xy[c][1] - xy[a][1]], L = Math.hypot(d[0], d[1]), tau = [d[0] / L, d[1] / L];
+      this.tau.push(tau); this.nrm.push([-tau[1], tau[0]]); this.b.push(L);
+    }
+    const K = zeros(3 * n, 3 * n), D = this.Eb * this.t ** 3 / 12;
+    this.walls.forEach(([a, c], w) => {
+      const L = this.b[w], nr = this.nrm[w];
+      const k = [[12, 6 * L, -12, 6 * L], [6 * L, 4 * L * L, -6 * L, 2 * L * L], [-12, -6 * L, 12, -6 * L], [6 * L, 2 * L * L, -6 * L, 4 * L * L]].map((r) => r.map((v) => v * D / L ** 3));
+      const Tm = zeros(4, 3 * n);
+      Tm[0][2 * a] = nr[0]; Tm[0][2 * a + 1] = nr[1]; Tm[1][2 * n + a] = 1;
+      Tm[2][2 * c] = nr[0]; Tm[2][2 * c + 1] = nr[1]; Tm[3][2 * n + c] = 1;
+      const add_ = matmul(T(Tm), matmul(k, Tm));
+      for (let i = 0; i < 3 * n; i++) for (let j = 0; j < 3 * n; j++) K[i][j] += add_[i][j];
+    });
+    this.Kframe = K;
+  }
+
+  _inplane(rows, vals) { // min 1/2 x^T K x  s.t.  C x = c   (KKT, minimum-norm least squares as numpy lstsq)
+    const n = this.n, m = rows.length, N = 3 * n + m, Kk = zeros(N, N);
+    for (let i = 0; i < 3 * n; i++) for (let j = 0; j < 3 * n; j++) Kk[i][j] = this.Kframe[i][j];
+    rows.forEach((r, k) => r.forEach((v, j) => { Kk[3 * n + k][j] = v; Kk[j][3 * n + k] = v; }));
+    const rhs = new Array(3 * n).fill(0).concat(vals);
+    return pinvSymSolve(Kk, rhs).slice(0, 3 * n);
+  }
+  _tanRow(w, node) { const r = new Array(3 * this.n).fill(0); r[2 * node] = this.tau[w][0]; r[2 * node + 1] = this.tau[w][1]; return r; }
+  _nrmRow(w, node) { const r = new Array(3 * this.n).fill(0); r[2 * node] = this.nrm[w][0]; r[2 * node + 1] = this.nrm[w][1]; return r; }
+
+  _modes() {
+    const n = this.n, nw = n - 1;
+    const hats = [];
+    for (let j = 0; j < n; j++) {
+      const phi = new Array(n).fill(0); phi[j] = 1;
+      const rows = [], vals = [];
+      this.walls.forEach(([a, c], w) => { const mu = -(phi[c] - phi[a]) / this.b[w]; rows.push(this._tanRow(w, a), this._tanRow(w, c)); vals.push(mu, mu); });
+      hats.push(this._inplane(rows, vals));
+    }
+    const X = T(hats);                       // (3n, n)
+    const CM = zeros(n, n);
+    this.walls.forEach(([a, c], w) => { const f = this.E * this.t * this.b[w]; CM[a][a] += f / 3; CM[c][c] += f / 3; CM[a][c] += f / 6; CM[c][a] += f / 6; });
+    const KD = matmul(T(X), matmul(this.Kframe, X));
+    const one = new Array(n).fill(1);
+    const ip = (u, v) => dot(u, matvec(CM, v));
+    let xs = this.xy.map((p) => p[0]), ys = this.xy.map((p) => p[1]);
+    const c1 = ip(xs, one) / ip(one, one), c2 = ip(ys, one) / ip(one, one);
+    xs = xs.map((v) => v - c1); ys = ys.map((v) => v - c2);
+    const B2 = [[ip(xs, xs), ip(xs, ys)], [ip(ys, xs), ip(ys, ys)]];
+    const { V } = eigSym(B2);
+    const bend = [0, 1].map((k) => xs.map((x, i) => V[0][k] * x + V[1][k] * ys[i]));
+    const Bm = T([one, bend[0], bend[1]]);
+    const Z = nullSpace(matmul(T(Bm), CM));  // (n, n-3)
+    const { w: ev, V: EV } = eighGen(matmul(T(Z), matmul(KD, Z)), matmul(T(Z), matmul(CM, Z)));
+    // torsion = rigid in-plane rotation (zero frame energy). With n = 4 (plain channel) the complement has
+    // dimension 1 and holds torsion only: no distortional modes, so there is no next eigenvalue to compare with.
+    if (ev.length > 1 && !(ev[0] < 1e-6 * ev[1])) throw new Error(`no rigid torsion mode found (${ev[0]}, ${ev[1]})`);
+    const zc = (k) => matvec(Z, EV.map((r) => r[k]));
+    const tors = zc(0), dist = [...Array(Z[0].length - 1).keys()].map((k) => zc(k + 1));
+    const fund = [bend[0], bend[1], tors, ...dist].map((f) => { const m = Math.max(...f.map(Math.abs)); return f.map((v) => v / m); });
+    const modes = [{ x: new Array(3 * n).fill(0), phi: one, has_v: false, has_w: true, group: "axial" }];
+    fund.forEach((f, k) => modes.push({ x: matvec(X, f), phi: f.slice(), has_v: true, has_w: true, group: k < 3 ? ["bend", "bend", "tors"][k] : "high" }));
+    // rigid in-plane motions, for the projection of local / extension modes
+    const rig = [];
+    for (const vec of [[1, 0], [0, 1]]) { const x = new Array(3 * n).fill(0); for (let N = 0; N < n; N++) { x[2 * N] = vec[0]; x[2 * N + 1] = vec[1]; } rig.push(x); }
+    { const x = new Array(3 * n).fill(0); for (let N = 0; N < n; N++) { x[2 * N] = -this.xy[N][1]; x[2 * N + 1] = this.xy[N][0]; x[2 * n + N] = 1; } rig.push(x); }
+    const R = T(rig), RU = R.slice(0, 2 * n);
+    const project = (x) => { const c = lstsqFull(RU, x.slice(0, 2 * n)); const Rc = matvec(R, c); return x.map((v, i) => v - Rc[i]); };
+    const zeroTan = []; this.walls.forEach(([a, c], w) => { zeroTan.push([w, a], [w, c]); });
+    for (const [end, other, wend, woth] of [[0, n - 1, 0, nw - 1], [n - 1, 0, nw - 1, 0]]) {
+      const rows = zeroTan.map(([w, nd]) => this._tanRow(w, nd)).concat([this._nrmRow(wend, end), this._nrmRow(woth, other)]);
+      const vals = zeroTan.map(() => 0).concat([1, 0]);
+      modes.push({ x: project(this._inplane(rows, vals)), phi: new Array(n).fill(0), has_v: true, has_w: false, group: "high" });
+    }
+    this.walls.forEach(([a, c], j) => {
+      const rows = [], vals = [];
+      this.walls.forEach(([aa, cc], w) => { rows.push(this._tanRow(w, aa), this._tanRow(w, cc)); vals.push(w === j ? -0.5 : 0, w === j ? 0.5 : 0); });
+      modes.push({ x: project(this._inplane(rows, vals)), phi: new Array(n).fill(0), has_v: true, has_w: false, group: "high" });
+    });
+    this.modes = modes; this.M = modes.length;
+    this.qidx = []; let k = 0;
+    for (const md of modes) { const iv = md.has_v ? k : null; k += md.has_v ? 1 : 0; const iw = md.has_w ? k : null; k += md.has_w ? 1 : 0; this.qidx.push([iv, iw]); }
+    this.nq = k;
+    if (this.nq !== 3 * n) throw new Error("nq != 3n");
+    const A = zeros(3 * n, this.nq);
+    modes.forEach((md, m) => { const [iv, iw] = this.qidx[m];
+      if (iv !== null) for (let N = 0; N < n; N++) { A[3 * N][iv] = md.x[2 * N]; A[3 * N + 1][iv] = md.x[2 * N + 1]; }
+      if (iw !== null) for (let N = 0; N < n; N++) A[3 * N + 2][iw] = md.phi[N]; });
+    this.A = A; this.Ainv = inv(A);
+  }
+
+  fields(m, w, x) { // psi, psi_s, psi_ss, mu, mu_s, phi, phi_s of mode m on wall w at x in [0,1]
+    const n = this.n, [a, c] = this.walls[w], L = this.b[w], md = this.modes[m], X = md.x, nr = this.nrm[w], ta = this.tau[w];
+    const pa = nr[0] * X[2 * a] + nr[1] * X[2 * a + 1], pc = nr[0] * X[2 * c] + nr[1] * X[2 * c + 1];
+    const tha = X[2 * n + a], thc = X[2 * n + c];
+    const h = [1 - 3 * x * x + 2 * x ** 3, L * (x - 2 * x * x + x ** 3), 3 * x * x - 2 * x ** 3, L * (-x * x + x ** 3)];
+    const dh = [-6 * x + 6 * x * x, L * (1 - 4 * x + 3 * x * x), 6 * x - 6 * x * x, L * (-2 * x + 3 * x * x)].map((v) => v / L);
+    const ddh = [-6 + 12 * x, L * (-4 + 6 * x), 6 - 12 * x, L * (-2 + 6 * x)].map((v) => v / (L * L));
+    const cf = [pa, tha, pc, thc];
+    const ma = ta[0] * X[2 * a] + ta[1] * X[2 * a + 1], mc = ta[0] * X[2 * c] + ta[1] * X[2 * c + 1], ph = md.phi;
+    return [dot(h, cf), dot(dh, cf), dot(ddh, cf), (1 - x) * ma + x * mc, (mc - ma) / L, (1 - x) * ph[a] + x * ph[c], (ph[c] - ph[a]) / L];
+  }
+
+  _sectionMatrices(ngs) {
+    const M = this.M, t = this.t, Eb = this.Eb, nu = this.nu, G = this.G;
+    const CMm = [[Eb, nu * Eb, 0, 0], [nu * Eb, Eb, 0, 0], [0, 0, G, 0], [0, 0, 0, G]], CBm = CMm.map((r) => r.slice());
+    const { x: xs, w: ws } = gauss01(ngs);
+    const Ci = this.walls.map(() => zeros(4 * M, 4 * M));
+    this.walls.forEach((_, w) => {
+      const L = this.b[w];
+      xs.forEach((x, g) => {
+        const bM = zeros(4, 4 * M), bB = zeros(4, 4 * M);
+        for (let m = 0; m < M; m++) {
+          const [psi, ps, pss, mu, mus, phi, phis] = this.fields(m, w, x), o = 4 * m;
+          bM[0][o] = mus; bM[1][o + 1] = phi; bM[2][o + 2] = phis + mu; bM[2][o + 3] = 0.5 * (mu - phis); bM[3][o + 3] = psi;
+          bB[0][o] = -pss; bB[1][o + 1] = -psi; bB[2][o + 2] = -2 * ps;
+        }
+        const K1 = matmul(T(bM), matmul(CMm, bM)), K2 = matmul(T(bB), matmul(CBm, bB)), f = ws[g] * L;
+        for (let i = 0; i < 4 * M; i++) for (let j = 0; j < 4 * M; j++) Ci[w][i][j] += f * (t * K1[i][j] + t ** 3 / 12 * K2[i][j]);
+      });
+    });
+    this.Ci = Ci;
+    this.C = Ci.reduce((S, A) => add(S, A), zeros(4 * M, 4 * M));
+    const act = [];
+    this.modes.forEach((md, m) => { const comps = { axial: [1], bend: [1, 3], tors: [1, 2, 3], high: [0, 1, 2, 3] }[md.group]; comps.forEach((c) => act.push(4 * m + c)); });
+    this.act = act;
+    this.CinvA = inv(act.map((i) => act.map((j) => this.C[i][j])));
+  }
+}
+
+export function stressModes(sec, z) {
+  const blocks = sec.modes.map((md) => {
+    if (md.group === "axial") return [[1]];
+    if (md.group === "bend") return [[1, -z], [0, 1]];
+    if (md.group === "tors") return [[1, z / 2, -z, -z * z, -2 / 3 * z ** 3], [0, 1, 0, -2 * z, -2 * z * z], [0, 0, 1, z, z * z]];
+    return [[6 * z, 2, 0, 0, 6 * z * z, 4 * z, 2, 0], [z ** 3, z * z, z, 1, 0, 0, 0, 0], [6 * z * z, 4 * z, 2, 0, 2 * z ** 3, 2 * z * z, 2 * z, 2], [0, 0, 0, 0, z ** 3, z * z, z, 1]];
+  });
+  return blockDiag(blocks);
+}
+
+export function DN(sec, z, Le) {
+  const M = sec.M, nq = sec.nq, out = zeros(4 * M, 2 * nq), xi = z / Le;
+  sec.modes.forEach((md, m) => {
+    const [iv, iw] = sec.qidx[m], o = 4 * m;
+    if (iv !== null) { const v1 = iv, v2 = nq + iv;
+      out[o][v1] += 1 - xi; out[o][v2] += xi; out[o + 2][v1] += -0.5 / Le; out[o + 2][v2] += 0.5 / Le; out[o + 3][v1] += -1 / Le; out[o + 3][v2] += 1 / Le; }
+    if (iw !== null) { const w1 = iw, w2 = nq + iw, lk = 0.5 * z * (1 - xi), dlk = 0.5 * (1 - 2 * xi);
+      if (iv !== null) { out[o][w1] += lk; out[o][w2] -= lk; out[o + 2][w1] += 0.5 * dlk; out[o + 2][w2] -= 0.5 * dlk; out[o + 3][w1] += dlk; out[o + 3][w2] -= dlk; }
+      out[o + 1][w1] += -1 / Le; out[o + 1][w2] += 1 / Le; out[o + 2][w1] += 0.5 * (1 - xi); out[o + 2][w2] += 0.5 * xi; out[o + 3][w1] -= 1 - xi; out[o + 3][w2] -= xi; }
+  });
+  return out;
+}
+
+/** H (nbeta x nbeta) and Gd[i] (nbeta x 6n) for an element of length Le. */
+export function elementMatrices(sec, Le, ngz = 6) {
+  const { x: zs, w: wz } = gauss01(ngz), act = sec.act, Cia = sec.CinvA, nw = sec.walls.length;
+  let H = null; const Gi = Array(nw).fill(null);
+  const CiAct = sec.Ci.map((C) => act.map((i) => C[i]));
+  zs.forEach((x, g) => {
+    const z = x * Le, P = stressModes(sec, z), Dn = DN(sec, z, Le), f = wz[g] * Le;
+    const PtC = matmul(T(P), Cia);
+    const Hk = scale(matmul(PtC, P), f); H = H ? add(H, Hk) : Hk;
+    for (let i = 0; i < nw; i++) { const Gk = scale(matmul(PtC, matmul(CiAct[i], Dn)), f); Gi[i] = Gi[i] ? add(Gi[i], Gk) : Gk; }
+  });
+  const nq = sec.nq, Ab = zeros(2 * nq, 2 * nq);
+  for (let i = 0; i < nq; i++) for (let j = 0; j < nq; j++) { Ab[i][j] = sec.Ainv[i][j]; Ab[nq + i][nq + j] = sec.Ainv[i][j]; }
+  return { H, Gd: Gi.map((g) => matmul(g, Ab)) };
+}
+</script>
+<script type="text/plain" id="lib-element">// GBT-ICM element (exact rotator) with an exact, structured tangent in plain JS (Float64Array).
+//
+//   Phi(u) = 1/2 r^T H^-1 r = 1/2 |rt|^2,  rt = R^-1 D r (H equilibrated, Cholesky),   r = sum_i Gd_i ucr_i(u)
+//   ucr_i,j = Q_i^T (p_j - O_i) + Ob_i - X_j,  p_j = X_j + u_j  (all 2n nodes of the element)       (5.2)
+//   Q_i = T_i(c_i) Tb_i^T, O_i(c_i): triad (5.1) of panel i, c_i = its 12 corner coordinates
+//
+//   f = Bt^T rt,   K = Bt^T Bt + sum_i d2 s_i / du2,   Bt = d rt / du,   s_i = lam_i . ucr_i,  lam_i = Gt_i^T rt
+//
+// With Gt_i = R^-1 D Gd_i stored as (nb, 2n, 3) and Y_i[b,k,m] = sum_j Gt_i[b,j,k] p_j,m, both rt and the corner
+// part of Bt cost O(nb) per panel corner coordinate instead of O(nb * 6n).
+// Q_i, O_i and their derivatives w.r.t. the 12 corner coordinates use a small second-order forward AD.
+// Reference (unoptimised) implementation: element_naive.js.
+import { elementMatrices } from "./section.js";
+import { cholesky } from "./linalg.js";
+
+const NV = 12;
+let WITH_H = true;   // second derivatives are propagated only when the tangent is requested
+class T2 {
+  constructor(v, g, h) { this.v = v; this.g = g || new Float64Array(NV); this.h = h === undefined ? (WITH_H ? new Float64Array(NV * NV) : null) : h; }
+  static var(v, i) { const t = new T2(v); t.g[i] = 1; return t; }
+  add(b) { const r = new T2(this.v + b.v); for (let i = 0; i < NV; i++) r.g[i] = this.g[i] + b.g[i]; if (r.h) for (let i = 0; i < NV * NV; i++) r.h[i] = this.h[i] + b.h[i]; return r; }
+  sub(b) { const r = new T2(this.v - b.v); for (let i = 0; i < NV; i++) r.g[i] = this.g[i] - b.g[i]; if (r.h) for (let i = 0; i < NV * NV; i++) r.h[i] = this.h[i] - b.h[i]; return r; }
+  scale(s) { const r = new T2(this.v * s); for (let i = 0; i < NV; i++) r.g[i] = this.g[i] * s; if (r.h) for (let i = 0; i < NV * NV; i++) r.h[i] = this.h[i] * s; return r; }
+  mul(b) {
+    const a = this, r = new T2(a.v * b.v);
+    for (let i = 0; i < NV; i++) r.g[i] = a.v * b.g[i] + b.v * a.g[i];
+    if (r.h) for (let i = 0; i < NV; i++) { const ai = a.g[i], bi = b.g[i], o = i * NV; for (let j = 0; j < NV; j++) r.h[o + j] = a.v * b.h[o + j] + b.v * a.h[o + j] + ai * b.g[j] + bi * a.g[j]; }
+    return r;
+  }
+  fn(f0, f1, f2) {
+    const r = new T2(f0);
+    for (let i = 0; i < NV; i++) r.g[i] = f1 * this.g[i];
+    if (r.h) for (let i = 0; i < NV; i++) { const gi = f2 * this.g[i], o = i * NV; for (let j = 0; j < NV; j++) r.h[o + j] = f1 * this.h[o + j] + gi * this.g[j]; }
+    return r;
+  }
+  inv() { const v = this.v; return this.fn(1 / v, -1 / (v * v), 2 / (v * v * v)); }
+  sqrt() { const s = Math.sqrt(this.v); return this.fn(s, 0.5 / s, -0.25 / (s * this.v)); }
+}
+const vadd = (a, b) => a.map((x, k) => x.add(b[k])), vsub = (a, b) => a.map((x, k) => x.sub(b[k])), vsc = (a, s) => a.map((x) => x.scale(s));
+const vdot = (a, b) => a[0].mul(b[0]).add(a[1].mul(b[1])).add(a[2].mul(b[2]));
+const vcross = (a, b) => [a[1].mul(b[2]).sub(a[2].mul(b[1])), a[2].mul(b[0]).sub(a[0].mul(b[2])), a[0].mul(b[1]).sub(a[1].mul(b[0]))];
+const vunit = (a) => { const s = vdot(a, a).sqrt().inv(); return a.map((x) => x.mul(s)); };
+function triadT2(PA, PB, PC, PD) {
+  const O = vsc(vadd(vadd(PA, PB), vadd(PC, PD)), 0.25);
+  const vz = vsub(vsc(vadd(PC, PD), 0.5), O), vs = vsub(vsc(vadd(PD, PA), 0.5), O);
+  const iz = vunit(vz), inn = vunit(vcross(iz, vs)), is_ = vcross(inn, iz);
+  return { cols: [is_, inn, iz], O };
+}
+function triadNum(PA, PB, PC, PD) {
+  const O = [0, 1, 2].map((k) => 0.25 * (PA[k] + PB[k] + PC[k] + PD[k]));
+  const vz = [0, 1, 2].map((k) => 0.5 * (PC[k] + PD[k]) - O[k]), vs = [0, 1, 2].map((k) => 0.5 * (PD[k] + PA[k]) - O[k]);
+  const un = (a) => { const s = Math.hypot(...a); return a.map((v) => v / s); };
+  const cr = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const iz = un(vz), inn = un(cr(iz, vs)), is_ = cr(inn, iz);
+  return { T: [0, 1, 2].map((r) => [is_[r], inn[r], iz[r]]), O };
+}
+
+export function makeElement(sec, Le) {
+  const n = sec.n, nw = sec.walls.length, nd = 6 * n, nn = 2 * n;
+  const { H, Gd } = elementMatrices(sec, Le);
+  // H = D^-1 R R^T D^-1 with D = diag(H)^-1/2 (equilibration) and R = chol(D H D); then
+  // Phi = 1/2 |rt|^2 with rt = R^-1 D r, i.e. Gt_i = R^-1 D Gd_i (forming H^-1 and its Cholesky factor loses accuracy).
+  const nb = H.length, Dg = H.map((row, i) => 1 / Math.sqrt(row[i]));
+  const R = cholesky(H.map((row, i) => row.map((v, j) => v * Dg[i] * Dg[j])));
+  const Gt = Gd.map((G) => { const out = new Float64Array(nb * nd);
+    for (let a = 0; a < nb; a++) { const o = a * nd; for (let q = 0; q < nd; q++) out[o + q] = Dg[a] * G[a][q];
+      for (let c = 0; c < a; c++) { const l = R[a][c]; if (l === 0) continue; const oc = c * nd; for (let q = 0; q < nd; q++) out[o + q] -= l * out[oc + q]; }
+      const d = R[a][a]; for (let q = 0; q < nd; q++) out[o + q] /= d; }
+    return out; });
+  const X = new Float64Array(nd);
+  for (let e = 0; e < 2; e++) for (let j = 0; j < n; j++) { X[(e * n + j) * 3] = sec.xy[j][0]; X[(e * n + j) * 3 + 1] = sec.xy[j][1]; X[(e * n + j) * 3 + 2] = e * Le; }
+  const P3 = (e, j) => (e * n + j) * 3;
+  const corners = sec.walls.map(([a, c]) => [P3(0, a), P3(0, c), P3(1, c), P3(1, a)]);
+  const cids = corners.map((cs) => { const r = []; cs.forEach((o) => r.push(o, o + 1, o + 2)); return r; });
+  const base = sec.walls.map((_, i) => triadNum(...corners[i].map((o) => [X[o], X[o + 1], X[o + 2]])));
+  // S_i[b,k] = sum_j Gt_i[b,j,k] ;  GXo_i[b,k,m] = sum_j Gt_i[b,j,k] (X_j,m - Ob_i,m)
+  // (positions relative to the base panel centroid Ob_i: no cancellation between large coordinates)
+  const Ssum = Gt.map((G) => { const S = new Float64Array(nb * 3); for (let b = 0; b < nb; b++) for (let j = 0; j < nn; j++) for (let k = 0; k < 3; k++) S[b * 3 + k] += G[b * nd + 3 * j + k]; return S; });
+  const GXo = Gt.map((G, i) => { const Ob = base[i].O, Z = new Float64Array(nb * 9);
+    for (let b = 0; b < nb; b++) for (let j = 0; j < nn; j++) for (let k = 0; k < 3; k++) { const g = G[b * nd + 3 * j + k]; for (let m = 0; m < 3; m++) Z[b * 9 + 3 * k + m] += g * (X[3 * j + m] - Ob[m]); }
+    return Z; });
+  function panel(p, i) {
+    const cid = cids[i], v = cid.map((d, k) => T2.var(p[d], k));
+    const { cols, O } = triadT2(v.slice(0, 3), v.slice(3, 6), v.slice(6, 9), v.slice(9, 12)), Tb = base[i].T;
+    const Q = [0, 1, 2].map((k) => [0, 1, 2].map((m) => cols[0][k].scale(Tb[m][0]).add(cols[1][k].scale(Tb[m][1])).add(cols[2][k].scale(Tb[m][2]))));
+    return { Q, O };
+  }
+
+  function evaluate(u, want = 2) {
+    WITH_H = want === 2;
+    const p = new Float64Array(nd); for (let q = 0; q < nd; q++) p[q] = X[q] + u[q];
+    const rt = new Float64Array(nb), Bt = want >= 1 ? new Float64Array(nb * nd) : null;
+    const pans = [], Ys = [];
+    const Y = new Float64Array(nb * 9);
+    for (let i = 0; i < nw; i++) {
+      const G = Gt[i], S = Ssum[i], Gx = GXo[i], Ob = base[i].O, { Q, O } = panel(p, i); pans.push({ Q, O });
+      // ucr_j = Q^T u_j + (Q^T - I)(X_j - Ob) - Q^T (O - Ob);  Y[b,k,m] = sum_j G[b,j,k] u_j,m + GXo[b,k,m]
+      for (let x = 0; x < nb * 9; x++) Y[x] = Gx[x];
+      for (let b = 0; b < nb; b++) { const ob = b * nd, oy = b * 9;
+        for (let j = 0; j < nn; j++) { const u0 = u[3 * j], u1 = u[3 * j + 1], u2 = u[3 * j + 2];
+          for (let k = 0; k < 3; k++) { const g = G[ob + 3 * j + k]; if (g === 0) continue; Y[oy + 3 * k] += g * u0; Y[oy + 3 * k + 1] += g * u1; Y[oy + 3 * k + 2] += g * u2; } } }
+      const Qv = [0, 1, 2].map((m) => [0, 1, 2].map((k) => Q[m][k].v)), dO = [O[0].v - Ob[0], O[1].v - Ob[1], O[2].v - Ob[2]];
+      const QtO = [0, 1, 2].map((k) => Qv[0][k] * dO[0] + Qv[1][k] * dO[1] + Qv[2][k] * dO[2]);
+      for (let b = 0; b < nb; b++) { const oy = b * 9; let s = 0;
+        for (let k = 0; k < 3; k++) { s += Qv[0][k] * Y[oy + 3 * k] + Qv[1][k] * Y[oy + 3 * k + 1] + Qv[2][k] * Y[oy + 3 * k + 2] - Gx[oy + 4 * k] - QtO[k] * S[b * 3 + k]; }
+        rt[b] += s; }
+      if (want >= 1) {
+        // direct part: Bt[b,(j,m)] += sum_k G[b,j,k] Q_mk
+        for (let b = 0; b < nb; b++) { const ob = b * nd;
+          for (let j = 0; j < nn; j++) { const g0 = G[ob + 3 * j], g1 = G[ob + 3 * j + 1], g2 = G[ob + 3 * j + 2]; if (g0 === 0 && g1 === 0 && g2 === 0) continue;
+            for (let m = 0; m < 3; m++) Bt[ob + 3 * j + m] += g0 * Qv[m][0] + g1 * Qv[m][1] + g2 * Qv[m][2]; } }
+        // corner part: d rt_b / d c_a = sum_km dQ_mk/dc_a Y[b,k,m] - sum_k d(Q^T O)_k/dc_a S[b,k]
+        const dQ = new Float64Array(9 * NV), dQtO = new Float64Array(3 * NV);
+        for (let m = 0; m < 3; m++) for (let k = 0; k < 3; k++) for (let a = 0; a < NV; a++) dQ[(3 * k + m) * NV + a] = Q[m][k].g[a];
+        for (let k = 0; k < 3; k++) for (let a = 0; a < NV; a++) { let s = 0; for (let m = 0; m < 3; m++) s += Q[m][k].g[a] * dO[m] + Qv[m][k] * O[m].g[a]; dQtO[k * NV + a] = s; }
+        const cid = cids[i];
+        for (let b = 0; b < nb; b++) { const oy = b * 9, ob = b * nd;
+          for (let a = 0; a < NV; a++) { let s = 0;
+            for (let km = 0; km < 9; km++) s += dQ[km * NV + a] * Y[oy + km];
+            for (let k = 0; k < 3; k++) s -= dQtO[k * NV + a] * S[b * 3 + k];
+            Bt[ob + cid[a]] += s; } }
+      }
+    }
+    let E = 0; for (let b = 0; b < nb; b++) E += 0.5 * rt[b] * rt[b];
+    if (want === 0) return { E };
+    const f = new Float64Array(nd);
+    for (let b = 0; b < nb; b++) { const r = rt[b]; if (r === 0) continue; const ob = b * nd; for (let q = 0; q < nd; q++) f[q] += Bt[ob + q] * r; }
+    if (want === 1) return { E, f };
+    // K = Bt^T Bt (upper triangle, then mirrored)
+    const K = new Float64Array(nd * nd);
+    for (let b = 0; b < nb; b++) { const ob = b * nd;
+      for (let pp = 0; pp < nd; pp++) { const bp = Bt[ob + pp]; if (bp === 0) continue; const op = pp * nd; for (let q = pp; q < nd; q++) K[op + q] += bp * Bt[ob + q]; } }
+    for (let pp = 0; pp < nd; pp++) for (let q = pp + 1; q < nd; q++) K[q * nd + pp] = K[pp * nd + q];
+    // geometric part: sum_i d2 s_i / du2
+    const lam = new Float64Array(nd);
+    for (let i = 0; i < nw; i++) {
+      const G = Gt[i], { Q, O } = pans[i], cid = cids[i], Ob = base[i].O;
+      lam.fill(0);
+      for (let b = 0; b < nb; b++) { const r = rt[b]; if (r === 0) continue; const ob = b * nd; for (let q = 0; q < nd; q++) lam[q] += G[ob + q] * r; }
+      const S = [[0, 0, 0], [0, 0, 0], [0, 0, 0]], Lam = [0, 0, 0];
+      for (let j = 0; j < nn; j++) for (let k = 0; k < 3; k++) { const l = lam[3 * j + k]; Lam[k] += l; for (let m = 0; m < 3; m++) S[m][k] += (p[3 * j + m] - Ob[m]) * l; }
+      const Hc = new Float64Array(NV * NV);
+      for (let m = 0; m < 3; m++) for (let k = 0; k < 3; k++) {
+        const QO = Q[m][k].mul(O[m].sub(new T2(Ob[m], new Float64Array(NV), new Float64Array(NV * NV)))), h1 = Q[m][k].h, h2 = QO.h, s1 = S[m][k], s2 = Lam[k];
+        for (let x = 0; x < NV * NV; x++) Hc[x] += h1[x] * s1 - h2[x] * s2;
+      }
+      for (let a = 0; a < NV; a++) for (let c = 0; c < NV; c++) K[cid[a] * nd + cid[c]] += Hc[a * NV + c];
+      for (let a = 0; a < NV; a++) for (let j = 0; j < nn; j++) for (let m = 0; m < 3; m++) {
+        const s = Q[m][0].g[a] * lam[3 * j] + Q[m][1].g[a] * lam[3 * j + 1] + Q[m][2].g[a] * lam[3 * j + 2];
+        K[cid[a] * nd + 3 * j + m] += s; K[(3 * j + m) * nd + cid[a]] += s;
+      }
+    }
+    return { E, f, K };
+  }
+  return { n, nw, nd, nb, H, Gd, X, evaluate, energy: (u) => evaluate(u, 0).E };
+}
+</script>
+<script type="text/plain" id="lib-banded">// Symmetric banded LDL^T factorization (no pivoting) with inertia count.
+// Storage: lower band, row-major: a[i*(bw+1) + (bw - (i-j))] = A[i][j] for i-bw <= j <= i.
+// GBT members numbered station by station are banded with bw = 2*3n - 1 (or less after removing fixed dofs).
+
+export class BandedSym {
+  constructor(n, bw) { this.n = n; this.bw = bw; this.w = bw + 1; this.a = new Float64Array(n * this.w); }
+  idx(i, j) { if (j > i) [i, j] = [j, i]; const k = i - j; if (k > this.bw) return -1; return i * this.w + (this.bw - k); }
+  add(i, j, v) { if (j > i) return; const k = this.idx(i, j); if (k < 0) throw new Error(`entry (${i},${j}) outside band ${this.bw}`); this.a[k] += v; }
+  get(i, j) { const k = this.idx(i, j); return k < 0 ? 0 : this.a[k]; }
+  /** In-place LDL^T. Returns { neg: number of negative pivots, minPivot }. Throws on exact zero pivot. */
+  factor() {
+    const { n, bw, w, a } = this; let neg = 0, minPiv = Infinity;
+    for (let j = 0; j < n; j++) {
+      const j0 = Math.max(0, j - bw);
+      // d_j = a_jj - sum_k l_jk^2 d_k
+      let djj = a[j * w + bw];
+      for (let k = j0; k < j; k++) { const ljk = a[j * w + bw - (j - k)]; djj -= ljk * ljk * a[k * w + bw]; }
+      if (djj === 0 || !isFinite(djj)) throw new Error(`zero pivot at ${j}`);
+      a[j * w + bw] = djj; if (djj < 0) neg++; minPiv = Math.min(minPiv, Math.abs(djj));
+      const i1 = Math.min(n - 1, j + bw);
+      for (let i = j + 1; i <= i1; i++) {
+        const i0 = Math.max(0, i - bw, j0);
+        let s = a[i * w + bw - (i - j)];
+        for (let k = i0; k < j; k++) s -= a[i * w + bw - (i - k)] * a[j * w + bw - (j - k)] * a[k * w + bw];
+        a[i * w + bw - (i - j)] = s / djj;
+      }
+    }
+    this.factored = true; this.neg = neg;
+    return { neg, minPivot: minPiv };
+  }
+  solve(b) {
+    const { n, bw, w, a } = this, x = Float64Array.from(b);
+    for (let i = 0; i < n; i++) { const i0 = Math.max(0, i - bw); let s = x[i]; for (let k = i0; k < i; k++) s -= a[i * w + bw - (i - k)] * x[k]; x[i] = s; }
+    for (let i = 0; i < n; i++) x[i] /= a[i * w + bw];
+    for (let i = n - 1; i >= 0; i--) { const i1 = Math.min(n - 1, i + bw); let s = x[i]; for (let k = i + 1; k <= i1; k++) s -= a[k * w + bw - (k - i)] * x[k]; x[i] = s; }
+    return x;
+  }
+}
+</script>
+<script type="text/plain" id="lib-model">// Straight GBT member: ne equal elements, dofs per station = 3D displacements of the n natural nodes.
+import { Section } from "./section.js";
+import { makeElement } from "./element.js";
+import { BandedSym } from "./banded.js";
+
+export class Member {
+  constructor(sec, L, ne) {
+    this.sec = sec instanceof Section ? sec : new Section(sec.xy, sec.t, sec);
+    this.n = this.sec.n; this.L = L; this.ne = ne; this.Le = L / ne;
+    this.nds = 3 * this.n; this.ndof = (ne + 1) * this.nds;
+    this.el = makeElement(this.sec, this.Le);       // all elements are equal: one kernel
+    this.fixed = new Uint8Array(this.ndof);
+  }
+  dof(station, node, comp) { return station * this.nds + node * 3 + comp; }
+  clamp(station) { for (let k = 0; k < this.nds; k++) this.fixed[station * this.nds + k] = 1; }
+  fix(station, node, comp) { this.fixed[this.dof(station, node, comp)] = 1; }
+  freeIndex() { const map = new Int32Array(this.ndof).fill(-1); let k = 0; for (let i = 0; i < this.ndof; i++) if (!this.fixed[i]) map[i] = k++; return { map, nf: k }; }
+
+  /** energy, internal force (full), tangent restricted to free dofs (banded). */
+  evaluate(d, want = 2) {
+    const nd = 2 * this.nds, f = new Float64Array(this.ndof); let E = 0;
+    const { map, nf } = this.freeIndex();
+    let K = null;
+    if (want === 2) { let bw = 0; for (let j = 0; j < this.ne; j++) { const fr = []; for (let q = 0; q < nd; q++) { const r = map[j * this.nds + q]; if (r >= 0) fr.push(r); } if (fr.length) bw = Math.max(bw, Math.max(...fr) - Math.min(...fr)); } K = new BandedSym(nf, bw); }
+    const ue = new Float64Array(nd);
+    for (let j = 0; j < this.ne; j++) {
+      const o = j * this.nds; for (let q = 0; q < nd; q++) ue[q] = d[o + q];
+      const r = this.el.evaluate(ue, want); E += r.E;
+      if (want >= 1) for (let q = 0; q < nd; q++) f[o + q] += r.f[q];
+      if (want === 2) for (let p = 0; p < nd; p++) { const rp = map[o + p]; if (rp < 0) continue; for (let q = 0; q < nd; q++) { const rq = map[o + q]; if (rq < 0 || rq > rp) continue; K.add(rp, rq, r.K[p * nd + q]); } }
+    }
+    return { E, f, K, map, nf };
+  }
+}
+
+const norm = (v) => Math.sqrt(v.reduce((s, x) => s + x * x, 0));
+
+/** Load-controlled Newton: f_int(d) = lam p on free dofs. */
+export function newton(model, d0, lam, p, { tol = 1e-9, maxit = 40 } = {}) {
+  const d = Float64Array.from(d0);
+  for (let it = 0; it < maxit; it++) {
+    const { f, K, map, nf } = model.evaluate(d, 2);
+    const r = new Float64Array(nf); let pn = 0;
+    for (let i = 0; i < model.ndof; i++) if (map[i] >= 0) { r[map[i]] = f[i] - lam * p[i]; pn += p[i] * p[i]; }
+    if (norm(r) <= tol * Math.max(Math.sqrt(pn) * Math.max(lam, 1e-30), 1e-30)) return { d, its: it, ok: true };
+    K.factor(); const dx = K.solve(r);
+    for (let i = 0; i < model.ndof; i++) if (map[i] >= 0) d[i] -= dx[map[i]];
+  }
+  return { d, its: maxit, ok: false };
+}
+
+/** Riks arc length (hyperplane restraint), port of solver.riks. Returns [{lam, d, neg}] (neg = negative pivots). */
+export function riks(model, p, dl0, nsteps, { lamMax = null, tol = 1e-6, maxit = 25, dsMax = null, onStep = null, monitor = null } = {}) {
+  const { map, nf } = model.freeIndex(), free = [...Array(model.ndof).keys()].filter((i) => map[i] >= 0);
+  const pf = Float64Array.from(free.map((i) => p[i])), pn = norm(pf);
+  let d = new Float64Array(model.ndof), lam = 0; const hist = [{ lam: 0, d: Float64Array.from(d), neg: 0 }];
+  const tang = (dd) => { const r = model.evaluate(dd, 2); r.K.factor(); return r; };
+  let T = tang(d), v = T.K.solve(pf);
+  let ds = dl0 * Math.sqrt(v.reduce((s, x) => s + x * x, 0) + 1); if (dsMax !== null) dsMax *= Math.sqrt(v.reduce((s, x) => s + x * x, 0) + 1);
+  let prev = null;
+  for (let step = 0; step < nsteps; step++) {
+    v = T.K.solve(pf); const nv = Math.sqrt(v.reduce((s, x) => s + x * x, 0) + 1);   // T: tangent at the last converged point
+    let sgn = 1; if (prev) sgn = Math.sign(v.reduce((s, x, k) => s + x * prev.dd[k], 0) + prev.dl) || 1;
+    const dlam = sgn * ds / nv, df = v.map((x) => dlam * x);
+    const dg = Float64Array.from(d); free.forEach((i, k) => { dg[i] += df[k]; }); let lg = lam + dlam;
+    let ok = false, it = 0, nr = 0, Tlast = null;
+    for (it = 0; it < maxit; it++) {
+      const R = model.evaluate(dg, 2), r = Float64Array.from(free.map((i, k) => R.f[i] - lg * pf[k]));
+      nr = norm(r) / Math.max(pn, 1e-12); if (nr < tol) { ok = true; Tlast = R; break; }
+      R.K.factor(); const a = R.K.solve(r.map((x) => -x)), b = R.K.solve(pf);
+      const dl = -a.reduce((s, x, k) => s + x * df[k], 0) / (b.reduce((s, x, k) => s + x * df[k], 0) + dlam);
+      free.forEach((i, k) => { dg[i] += a[k] + dl * b[k]; }); lg += dl;
+    }
+    if (!ok) { ds *= 0.5; if (ds < 1e-6 * dl0) break; continue; }      // T unchanged: still the tangent at d
+    prev = { dd: free.map((i) => dg[i] - d[i]), dl: lg - lam };
+    d = dg; lam = lg;
+    T = Tlast; T.K.factor(); const neg = T.K.neg;                                       // reused for the next predictor
+    if (onStep) onStep(d);
+    hist.push({ lam, d: Float64Array.from(d), neg, its: it });
+    if (monitor) monitor(step, lam, d, it, neg);
+    if (it <= 5) ds *= 1.5; else if (it > 10) ds *= 0.7;
+    if (dsMax !== null) ds = Math.min(ds, dsMax);
+    if (lamMax !== null && lam >= lamMax) break;
+  }
+  return hist;
+}
+</script>
+<script type="text/plain" id="lib-worker">// GBT Studio – solver worker. Uses the gbtjs library unchanged (import specifiers are pointed to blob URLs at load time).
+import { Section, stressModes } from "./section.js";
+import { Member, riks } from "./model.js";
+import { lu, matvec } from "./linalg.js";
+
+/* ---------- section ---------- */
+let secCache = { key: null, sec: null };
+function getSection(s) {
+  const key = JSON.stringify([s.xy, s.t, s.E, s.nu]);
+  if (secCache.key !== key) secCache = { key, sec: new Section(s.xy, s.t, { E: s.E, nu: s.nu }) };
+  return secCache.sec;
+}
+
+function modeKeys(sec) {   // mode -> constraint group key
+  let nb = 0;
+  return sec.modes.map((m, i) => i === 0 ? "axial" : m.group === "bend" ? (nb++ === 0 ? "bend1" : "bend2") : m.group === "tors" ? "tors" : m.has_w ? "dist" : "local");
+}
+
+function geom(sec) {
+  const n = sec.n, w = new Array(n).fill(0);
+  sec.walls.forEach(([a, c], k) => { w[a] += sec.b[k] / 2; w[c] += sec.b[k] / 2; });
+  const A = w.reduce((s, v) => s + v, 0) * sec.t;
+  const wn = w.map((v) => v / (A / sec.t));
+  const G = [0, 1].map((k) => sec.xy.reduce((s, p, i) => s + wn[i] * p[k], 0));
+  // second moments (exact for straight walls)
+  let Ixx = 0, Iyy = 0, Ixy = 0;
+  sec.walls.forEach(([a, c], k) => { const t = sec.t, L = sec.b[k], xa = sec.xy[a][0] - G[0], ya = sec.xy[a][1] - G[1], xc = sec.xy[c][0] - G[0], yc = sec.xy[c][1] - G[1];
+    Ixx += t * L * (ya * ya + ya * yc + yc * yc) / 3; Iyy += t * L * (xa * xa + xa * xc + xc * xc) / 3; Ixy += t * L * (2 * xa * ya + xa * yc + xc * ya + 2 * xc * yc) / 6; });
+  const J = sec.walls.reduce((s, _, k) => s + sec.b[k] * sec.t ** 3 / 3, 0);
+  // shear centre from the torsion mode: in-plane rigid rotation about C
+  const tm = sec.modes.find((m) => m.group === "tors"); let sc = null;
+  if (tm) { const S = [[0, 0, 0], [0, 0, 0], [0, 0, 0]], r = [0, 0, 0];
+    for (let i = 0; i < n; i++) { const [x, y] = sec.xy[i];
+      for (const [row, v] of [[[-y, 1, 0], tm.x[2 * i]], [[x, 0, 1], tm.x[2 * i + 1]]]) for (let p = 0; p < 3; p++) { r[p] += row[p] * v; for (let q = 0; q < 3; q++) S[p][q] += row[p] * row[q]; } }
+    const s = lu(S)(r); sc = [-s[2] / s[0], s[1] / s[0]]; }
+  return { A, G, Ixx, Iyy, Ixy, J, sc, w: wn };
+}
+
+function summary(sec) {
+  const g = geom(sec), keys = modeKeys(sec);
+  return { n: sec.n, M: sec.M, nq: sec.nq, ...g, keys, qidx: sec.qidx, b: sec.b, Ainv: sec.Ainv,
+    modes: sec.modes.map((m) => ({ x: m.x, phi: m.phi, group: m.group, has_v: m.has_v, has_w: m.has_w })) };
+}
+
+/* ---------- loads ---------- */
+// weighted minimum-norm nodal forces f (length n) with B f = b, f = W B^T (B W B^T)^-1 b
+function wmin(Brows, b, w) {
+  const m = Brows.length, S = Brows.map((r) => Brows.map((q) => r.reduce((s, v, i) => s + v * q[i] * w[i], 0)));
+  const y = lu(S)(b);
+  return w.map((wi, i) => wi * Brows.reduce((s, r, k) => s + r[i] * y[k], 0));
+}
+function stationLoad(sec, g, L) {   // force-like spec -> 3n station vector (value already scaled)
+  const n = sec.n, out = new Float64Array(3 * n), xy = sec.xy, G = g.G;
+  const pt = L.pt === "C" && g.sc ? g.sc : L.pt === "N" ? xy[L.node] : G;
+  const inplane = (Fx, Fy, Mz) => {   // resultants at G
+    const rows = [[], [], []]; // unknowns: fx_i, fy_i interleaved -> solve separately via 2n vector
+    const B = [new Array(2 * n).fill(0), new Array(2 * n).fill(0), new Array(2 * n).fill(0)], w2 = [];
+    for (let i = 0; i < n; i++) { B[0][2 * i] = 1; B[1][2 * i + 1] = 1; B[2][2 * i] = -(xy[i][1] - G[1]); B[2][2 * i + 1] = xy[i][0] - G[0]; w2.push(g.w[i], g.w[i]); }
+    const f = wmin(B, [Fx, Fy, Mz], w2);
+    for (let i = 0; i < n; i++) { out[3 * i] += f[2 * i]; out[3 * i + 1] += f[2 * i + 1]; }
+  };
+  const axial = (Fz, Mx, My) => {
+    const B = [xy.map(() => 1), xy.map((p) => p[1] - G[1]), xy.map((p) => -(p[0] - G[0]))];
+    const f = wmin(B, [Fz, Mx, My], g.w); for (let i = 0; i < n; i++) out[3 * i + 2] += f[i];
+  };
+  const V = { "+x": [1, 0, 0], "-x": [-1, 0, 0], "+y": [0, 1, 0], "-y": [0, -1, 0], "+z": [0, 0, 1], "-z": [0, 0, -1] };
+  const v = L.val;
+  if (L.k === "forza" || L.k === "distribuito") {
+    const F = (L.vec || V[L.dir] || [0, 0, 0]).map((c) => c * v);
+    if (L.pt === "N") { for (let k = 0; k < 3; k++) out[3 * L.node + k] += F[k]; }
+    else if (L.pt === "W") {   // mid-surface point on a wall: in-plane via GBT mode fields (as in the paper, ex. 7.3)
+      const fq = new Array(sec.nq).fill(0), w = L.wall, x = L.xw ?? 0.5, nr = sec.nrm[w], ta = sec.tau[w];
+      sec.modes.forEach((md, m) => { const iv = sec.qidx[m][0]; if (iv === null) return; const f = sec.fields(m, w, x);
+        fq[iv] = F[0] * (f[0] * nr[0] + f[3] * ta[0]) + F[1] * (f[0] * nr[1] + f[3] * ta[1]); });
+      const fd = sec.Ainv[0].map((_, j) => sec.Ainv.reduce((s, row, i) => s + row[j] * fq[i], 0));
+      for (let j = 0; j < 3 * n; j++) out[j] += fd[j];
+      if (F[2]) { const a = sec.walls[w][0], c = sec.walls[w][1]; out[3 * a + 2] += F[2] * (1 - x); out[3 * c + 2] += F[2] * x; }
+    } else {
+      if (F[0] || F[1]) inplane(F[0], F[1], (pt[0] - G[0]) * F[1] - (pt[1] - G[1]) * F[0]);
+      if (F[2]) axial(F[2], F[2] * (pt[1] - G[1]), -F[2] * (pt[0] - G[0]));
+    }
+  } else if (L.k === "assiale") {
+    const N = L.dir === "comp" ? -v : v;
+    if (L.pt === "N") out[3 * L.node + 2] += N; else axial(N, N * (pt[1] - G[1]), -N * (pt[0] - G[0]));
+  } else if (L.k === "momento") {
+    if (L.dir === "Mz") inplane(0, 0, v); else axial(0, L.dir === "Mx" ? v : 0, L.dir === "My" ? v : 0);
+  } else if (L.k === "bimomento" || L.k === "modale") {
+    let q;
+    if (L.k === "bimomento") { const m = sec.modes.findIndex((md) => md.group === "tors"); q = sec.qidx[m][1]; }
+    else q = sec.qidx[L.mode][L.comp === "w" ? 1 : 0];
+    if (q !== null && q !== undefined) for (let j = 0; j < 3 * n; j++) out[j] += sec.Ainv[q][j] * (L.k === "bimomento" && L.dir === "-" ? -v : v);
+  }
+  return out;
+}
+
+/* ---------- model ---------- */
+class MemberPen extends Member {   // generalized (modal) constraints by penalty: E += k/2 (a.d)^2
+  constructor(sec, L, ne) { super(sec, L, ne); this.pen = []; }
+  evaluate(d, want = 2) {
+    const r = super.evaluate(d, want);
+    for (const c of this.pen) {
+      let g = 0; for (let i = 0; i < c.dofs.length; i++) g += c.a[i] * d[c.dofs[i]];
+      r.E += 0.5 * c.k * g * g;
+      if (want >= 1) for (let i = 0; i < c.dofs.length; i++) r.f[c.dofs[i]] += c.k * g * c.a[i];
+      if (want === 2) for (let i = 0; i < c.dofs.length; i++) { const ri = r.map[c.dofs[i]]; if (ri < 0) continue;
+        for (let j = 0; j < c.dofs.length; j++) { const rj = r.map[c.dofs[j]]; if (rj < 0 || rj > ri) continue; r.K.add(ri, rj, c.k * c.a[i] * c.a[j]); } }
+    }
+    return r;
+  }
+}
+
+function build(spec) {
+  const sec = getSection(spec.sec), g = geom(sec), keys = modeKeys(sec);
+  const m = new MemberPen(sec, spec.L, spec.ne), n = sec.n, nds = m.nds;
+  const kpen = 1e4 * spec.sec.E * spec.sec.t;
+  let npen = 0;
+  for (const s of spec.supports) {
+    const qs = [];
+    keys.forEach((k, mi) => { const f = s.fix[k] || {}; const [iv, iw] = sec.qidx[mi]; if (f.v && iv !== null) qs.push(iv); if (f.w && iw !== null) qs.push(iw); });
+    const vAll = sec.qidx.every(([iv]) => iv === null || qs.includes(iv)), wAll = sec.qidx.every(([, iw]) => iw === null || qs.includes(iw));
+    if (vAll) for (let i = 0; i < n; i++) { m.fix(s.st, i, 0); m.fix(s.st, i, 1); }
+    if (wAll) for (let i = 0; i < n; i++) m.fix(s.st, i, 2);
+    for (const q of qs) {
+      const isV = sec.qidx.some(([iv]) => iv === q);
+      if ((isV && vAll) || (!isV && wAll)) continue;
+      const row = sec.Ainv[q], dofs = [], a = []; let nr = 0;
+      for (let j = 0; j < 3 * n; j++) if (row[j] !== 0) { dofs.push(s.st * nds + j); a.push(row[j]); nr += row[j] * row[j]; }
+      nr = Math.sqrt(nr); m.pen.push({ dofs, a: a.map((x) => x / nr), k: kpen }); npen++;
+    }
+  }
+  const p = new Float64Array(m.ndof);
+  const addAt = (st, vec, f) => { for (let j = 0; j < 3 * n; j++) p[st * nds + j] += f * vec[j]; };
+  let Pref = 0;
+  for (const L of spec.loads) {
+    if (L.k === "distribuito") { const vec = stationLoad(sec, g, L);
+      for (let st = 0; st <= spec.ne; st++) addAt(st, vec, (st === 0 || st === spec.ne ? 0.5 : 1) * m.Le);
+      Pref = Math.max(Pref, Math.abs(L.val) * spec.L);
+    } else { addAt(L.st, stationLoad(sec, g, L), 1); if (L.k === "forza" || L.k === "assiale") Pref = Math.max(Pref, Math.abs(L.val)); }
+  }
+  const im = spec.imp;
+  if (im && im.kind !== "none" && im.eps > 0) {
+    const st = Math.round(spec.ne / 2), mag = im.eps * (Pref || 1);
+    const L = im.kind === "t" ? { k: "momento", dir: "Mz", val: mag * 100 } : { k: "forza", dir: im.kind === "x" ? "+x" : "+y", pt: "G", val: mag };
+    addAt(st, stationLoad(sec, g, L), 1);
+  }
+  return { m, p, npen };
+}
+
+/* ---------- stresses ---------- */
+function triadNum(PA, PB, PC, PD) {   // same triad as element.js (5.1)
+  const O = [0, 1, 2].map((k) => 0.25 * (PA[k] + PB[k] + PC[k] + PD[k]));
+  const vz = [0, 1, 2].map((k) => 0.5 * (PC[k] + PD[k]) - O[k]), vs = [0, 1, 2].map((k) => 0.5 * (PD[k] + PA[k]) - O[k]);
+  const un = (a) => { const s = Math.hypot(...a); return a.map((v) => v / s); };
+  const cr = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const iz = un(vz), inn = un(cr(iz, vs)), is_ = cr(inn, iz);
+  return { T: [0, 1, 2].map((r) => [is_[r], inn[r], iz[r]]), O };
+}
+const XS = [0, 0.25, 0.5, 0.75, 1];
+let stressCache = { key: null };
+function stresses(spec, d) {
+  const key = JSON.stringify([spec.sec, spec.L, spec.ne]);
+  if (stressCache.key !== key) {
+    const sec = getSection(spec.sec), m = new Member(sec, spec.L, spec.ne), el = m.el;
+    const P = stressModes(sec, m.Le / 2), Hs = lu(el.H);
+    // field operators at the sample points: membrane strain rows bM (4 x 4M) and curvature rows bB (3 x 4M)
+    const ops = sec.walls.map((_, w) => XS.map((x) => {
+      const M = sec.M, bM = [0, 1, 2, 3].map(() => new Float64Array(4 * M)), bB = [0, 1, 2].map(() => new Float64Array(4 * M));
+      for (let k = 0; k < M; k++) { const [psi, ps, pss, mu, mus, phi, phis] = sec.fields(k, w, x), o = 4 * k;
+        bM[0][o] = mus; bM[1][o + 1] = phi; bM[2][o + 2] = phis + mu; bM[2][o + 3] = 0.5 * (mu - phis); bM[3][o + 3] = psi;
+        bB[0][o] = -pss; bB[1][o + 1] = -psi; bB[2][o + 2] = -2 * ps; }
+      return { bM, bB };
+    }));
+    stressCache = { key, sec, m, el, P, Hs, ops };
+  }
+  const { sec, m, el, P, Hs, ops } = stressCache, n = sec.n, nd = 2 * m.nds, X = el.X, act = sec.act;
+  const corner = (e, j) => (e * n + j) * 3, Eb = sec.Eb, nu = sec.nu, G = sec.G, t = sec.t;
+  const gen = [], field = [];
+  for (let j = 0; j < m.ne; j++) {
+    const u = d.slice(j * m.nds, j * m.nds + nd), p = X.map((v, q) => v + u[q]), r = new Array(el.nb).fill(0);
+    sec.walls.forEach(([a, c], i) => {
+      const cs = [corner(0, a), corner(0, c), corner(1, c), corner(1, a)];
+      const tc = triadNum(...cs.map((o) => [p[o], p[o + 1], p[o + 2]])), tb = triadNum(...cs.map((o) => [X[o], X[o + 1], X[o + 2]]));
+      const Q = [0, 1, 2].map((r_) => [0, 1, 2].map((k) => tc.T[r_][0] * tb.T[k][0] + tc.T[r_][1] * tb.T[k][1] + tc.T[r_][2] * tb.T[k][2]));
+      const Gi = el.Gd[i];
+      for (let q = 0; q < 2 * n; q++) for (let k = 0; k < 3; k++) {
+        let s = 0; for (let mm = 0; mm < 3; mm++) s += Q[mm][k] * (p[3 * q + mm] - tc.O[mm]);
+        const ucr = s + tb.O[k] - X[3 * q + k];
+        if (ucr !== 0) for (let b = 0; b < el.nb; b++) r[b] += Gi[b][3 * q + k] * ucr;
+      }
+    });
+    const beta = Hs(r), sa = matvec(P, beta);           // active generalized stresses at mid-element
+    const ea = matvec(sec.CinvA, sa), e = new Float64Array(4 * sec.M); act.forEach((ix, k) => { e[ix] = ea[k]; });
+    gen.push(sa);
+    field.push(ops.map((row) => row.map(({ bM, bB }) => {
+      const dot = (v) => v.reduce((s, x, i) => s + x * e[i], 0);
+      const ess = dot(bM[0]), ezz = dot(bM[1]), gm = dot(bM[2]), kss = dot(bB[0]), kzz = dot(bB[1]), ksz = dot(bB[2]);
+      const at = (z) => { const a = ess + z * kss, b = ezz + z * kzz, sxx = Eb * (a + nu * b), szz = Eb * (b + nu * a), tau = G * (gm + z * ksz);
+        return [szz, Math.sqrt(sxx * sxx + szz * szz - sxx * szz + 3 * tau * tau)]; };
+      const top = at(t / 2), bot = at(-t / 2), mid = at(0);
+      return [mid[0], top[0], bot[0], Math.max(top[1], bot[1])];
+    })));
+  }
+  return { act, gen, field, xs: XS };
+}
+
+/* ---------- messages ---------- */
+self.onmessage = (ev) => {
+  const msg = ev.data;
+  try {
+    if (msg.type === "section") {
+      const t0 = performance.now(), sec = getSection(msg.sec);
+      self.postMessage({ type: "section", id: msg.id, summary: summary(sec), ms: performance.now() - t0 });
+    } else if (msg.type === "solve") {
+      const t0 = performance.now(), spec = msg.spec, { m, p, npen } = build(spec);
+      const { nf } = m.freeIndex();
+      if (!p.some((v) => v !== 0)) throw new Error("No load applied.");
+      const T = m.evaluate(new Float64Array(m.ndof), 2);
+      let dmax = 0; for (let i = 0; i < nf; i++) dmax = Math.max(dmax, Math.abs(T.K.get(i, i)));
+      const LAB = "Mechanism: the supports do not prevent all rigid-body motions of the beam. Add or change supports.";
+      let fr; try { fr = T.K.factor(); } catch (e) { throw new Error(LAB); }
+      const pf = Float64Array.from([...p].filter((_, i) => !m.fixed[i])), v0 = T.K.solve(pf);
+      const umax = v0.reduce((s, x) => Math.max(s, Math.abs(x)), 0);
+      if (fr.neg > 0 || !(fr.minPivot > 1e-13 * dmax) || !isFinite(umax) || umax > 1e7 * spec.L) throw new Error(LAB);
+      self.postMessage({ type: "built", ndof: m.ndof, nfree: nf, npen, ms: performance.now() - t0 });
+      const t1 = performance.now(), o = spec.riks;
+      riks(m, p, o.dl0, o.nsteps, { lamMax: o.lamMax, dsMax: o.dsMax,
+        monitor: (step, lam, d, it, neg) => self.postMessage({ type: "step", step, lam, its: it, neg, d: Float64Array.from(d), ms: performance.now() - t1 }) });
+      self.postMessage({ type: "done", ms: performance.now() - t1 });
+    } else if (msg.type === "bench") {   // cost of one element tangent (for run-time estimates)
+      const sec = getSection(msg.sec), t0 = performance.now(), m = new Member(sec, 1000, 2), tSetup = performance.now() - t0;
+      const d = new Float64Array(m.ndof).map((_, i) => 1e-4 * Math.sin(i + 1));
+      m.evaluate(d, 2); let k = 0; const t1 = performance.now();
+      do { m.evaluate(d, 2); k++; } while (performance.now() - t1 < 300 || k < 2);
+      self.postMessage({ type: "bench", id: msg.id, tK: (performance.now() - t1) / k / 2, tSetup });
+    } else if (msg.type === "ping") {
+      self.postMessage({ type: "pong", id: msg.id });
+    } else if (msg.type === "stress") {
+      self.postMessage({ type: "stress", id: msg.id, ...stresses(msg.spec, Float64Array.from(msg.d)) });
+    }
+  } catch (e) {
+    self.postMessage({ type: "error", id: msg.id, where: msg.type, message: String((e && e.message) || e) });
+  }
+};
+</script>
+<script>
+"use strict";
+/* ====================================================================================
+   GBT Studio – single-file app. Solver: gbtjs (embedded verbatim above, run in Web Workers).
+   ==================================================================================== */
+
+// ---------- library loading ----------
+// The embedded ES-module sources (unchanged) are linked at load time into one classic worker script: each module
+// runs in its own function scope, "export" declarations become its return value, "import {..} from './x.js'"
+// reads from it. Classic blob workers also run when the page is opened from file:// (module workers do not).
+const BUNDLE = (() => {
+  let out = '"use strict";\nconst __M = {};\n';
+  for (const k of ["linalg", "section", "element", "banded", "model", "worker"]) {
+    const exps = [];
+    let src = document.getElementById("lib-" + k).textContent;
+    src = src.replace(/^export\s+(function|class|const|let)\s+([A-Za-z_$][\w$]*)/gm, (m, kw, name) => { exps.push(name); return kw + " " + name; });
+    src = src.replace(/^import\s*\{([^}]*)\}\s*from\s*["']\.\/(\w+)\.js["'];?/gm, (m, names, mod) => `const {${names}} = __M.${mod};`);
+    out += `__M.${k} = (function () {\n${src}\nreturn { ${exps.join(", ")} };\n})();\n`;
+  }
+  return out;
+})();
+const WORKER_URL = URL.createObjectURL(new Blob([BUNDLE], { type: "text/javascript" }));
+// Engine: a real Web Worker when the browser allows it; otherwise (sandboxed previews, some mobile viewers, strict CSP)
+// the same bundle runs in the page through a worker-like object (the page is busy while it computes).
+let ENGINE = null;
+function inlineFactory() {
+  if (window.__gbtFactory) return window.__gbtFactory;
+  try { const sc = document.createElement("script"); sc.textContent = "window.__gbtFactory = function (self) {\n" + BUNDLE + "\n};"; document.head.appendChild(sc); } catch (e) {}
+  if (!window.__gbtFactory) { try { window.__gbtFactory = new Function("self", BUNDLE); } catch (e) {} }
+  if (!window.__gbtFactory) throw new Error("the browser does not allow the solver to run (neither Web Workers nor in-page scripts)");
+  return window.__gbtFactory;
+}
+function makeInline() {
+  const ext = { onmessage: null, onerror: null, dead: false, postMessage(m) { setTimeout(() => { if (ext.dead) return; try { inner.onmessage({ data: m }); } catch (e) { ext.onerror && ext.onerror({ message: String(e && e.message || e) }); } }, 0); }, terminate() { ext.dead = true; } };
+  const inner = { onmessage: null, postMessage(m) { if (ext.dead) return; setTimeout(() => { if (!ext.dead && ext.onmessage) ext.onmessage({ data: m }); }, 0); } };
+  inlineFactory()(inner);
+  return ext;
+}
+const newWorker = () => (ENGINE === "inline" ? makeInline() : new Worker(WORKER_URL));
+function probeWorker(ms = 4000) {
+  if (new URLSearchParams(location.search).get("engine") === "inline") return Promise.resolve(false);
+  return new Promise((res) => {
+    let w; const done = (ok) => { clearTimeout(t); try { if (w) w.terminate(); } catch (e) {} res(ok); };
+    const t = setTimeout(() => done(false), ms);
+    try { w = new Worker(WORKER_URL); w.onmessage = (e) => done(e.data && e.data.type === "pong"); w.onerror = () => done(false); w.postMessage({ type: "ping", id: 0 }); }
+    catch (e) { done(false); }
+  });
+}
+
+// RPC workers for section analysis and stress recovery; a third one runs the solve (terminated on stop)
+function rpcWorker() {
+  let w = newWorker(), id = 0; const pend = new Map();
+  const hook = () => { w.onmessage = (e) => { const m = e.data, p = pend.get(m.id); if (!p) return; pend.delete(m.id); m.type === "error" ? p.rej(new Error(m.message)) : p.res(m); };
+    w.onerror = (e) => { for (const p of pend.values()) p.rej(new Error(e.message || "worker error")); pend.clear(); }; };
+  hook();
+  return { call(msg, ms = 60000) { return new Promise((res, rej) => { const i = ++id; pend.set(i, { res, rej }); setTimeout(() => { if (pend.has(i)) { pend.delete(i); rej(new Error("no answer from the solver")); } }, ms); w.postMessage({ ...msg, id: i }); }); },
+    reset() { w.terminate(); for (const p of pend.values()) p.rej(new Error("cancelled")); pend.clear(); w = newWorker(); hook(); } };
+}
+let SECW = null, STRW = null;
+
+// ---------- data ----------
+const VERSION = "1.0 (2026-11-27)";
+const HOME_URL = "https://coffepowered.github.io/tools/";
+const RACK = [[-94,-42.5],[-100,-42.5],[-100,-32.5],[-70,-32.5],[-60,-52.5],[0,-52.5],[0,-10],[-10,0],[0,10],[0,52.5],[-60,52.5],[-70,32.5],[-100,32.5],[-100,42.5],[-94,42.5]];
+const ZSEC = [[-111,-110],[-90,-120],[0,-120],[0,120],[90,120],[111,110]];
+const LIB = [
+  { id: "rack23", name: "Rack (paper 7.1) · t 2.3", xy: RACK, t: 2.3 },
+  { id: "rack32", name: "Stocky rack (paper 7.2) · t 3.2", xy: RACK, t: 3.2 },
+  { id: "C150", name: "Lipped C 150", xy: [[60,-55],[60,-75],[0,-75],[0,75],[60,75],[60,55]], t: 2.2 },
+  { id: "C100t10", name: "Thick lipped C · t 10", xy: [[50,-35],[50,-50],[0,-50],[0,50],[50,50],[50,35]], t: 10 },
+  { id: "Z", name: "Lipped Z (paper 7.3)", xy: ZSEC, t: 2.3 },
+  { id: "sigma", name: "Sigma", xy: [[50,-40],[50,-60],[0,-60],[0,-20],[10,0],[0,20],[0,60],[50,60],[50,40]], t: 1.8 },
+  { id: "hat", name: "Hat (omega)", xy: [[-60,0],[-30,0],[-30,50],[30,50],[30,0],[60,0]], t: 2 },
+  { id: "U", name: "Plain channel (U)", xy: [[50,-50],[0,-50],[0,50],[50,50]], t: 3 },
+];
+const GROUPS = [["axial", "Extension", "1"], ["bend1", "Bending 1", "2"], ["bend2", "Bending 2", "3"], ["tors", "Torsion", "4"], ["dist", "Distortional", "5…"], ["local", "Local and transverse", ""]];
+const SUPK = ["incastro", "appoggio", "carrello", "cerniera", "pendolo", "libero"];
+const NAMES = { incastro: "Clamped", appoggio: "Fork support", carrello: "Sliding fork support", cerniera: "Spherical hinge", pendolo: "Guided (sliding clamp)", libero: "Free", personalizzato: "Custom",
+  forza: "Force", assiale: "Axial load", distribuito: "Distributed", momento: "Moment", bimomento: "Bimoment", modale: "Modal (GBT)" };
+const SUPDESC = { incastro: "all modes restrained: displacements and warping",
+  appoggio: "section rigid in its plane, axial displacement restrained, warping free",
+  carrello: "section rigid in its plane, axially free, warping free",
+  cerniera: "translations X, Y, Z restrained only; rotations and distortion free",
+  pendolo: "bending rotations, twist and axial displacement restrained; transverse translations free",
+  libero: "no restraint" };
+function preset(k) {
+  const f = {}; for (const [g] of GROUPS) f[g] = { v: false, w: false };
+  const set = (g, v, w) => { f[g] = { v: !!v, w: !!w }; };
+  if (k === "incastro") for (const [g] of GROUPS) set(g, 1, 1);
+  if (k === "appoggio" || k === "carrello") { for (const [g] of GROUPS) set(g, 1, 0); if (k === "appoggio") f.axial.w = true; }
+  if (k === "cerniera") { set("bend1", 1, 0); set("bend2", 1, 0); f.axial.w = true; }
+  if (k === "pendolo") { f.axial.w = true; f.bend1.w = true; f.bend2.w = true; f.tors.v = true; }
+  return f;
+}
+const ICON = {
+  incastro: "M16 2 L16 28 M16 6 l-8 6 M16 14 l-8 6 M16 22 l-8 6 M16 15 L40 15",
+  appoggio: "M22 4 L12 20 L32 20 Z M8 24 L36 24 M12 24 l-4 5 M20 24 l-4 5 M28 24 l-4 5 M36 24 l-4 5",
+  carrello: "M22 4 L12 18 L32 18 Z M16 22 a2 2 0 1 0 0.1 0 M28 22 a2 2 0 1 0 0.1 0 M8 27 L36 27",
+  cerniera: "M22 8 L12 22 L32 22 Z M22 5 a3 3 0 1 0 0.1 0 M8 26 L36 26",
+  pendolo: "M16 4 L16 22 M28 4 L28 22 M16 4 a2 2 0 1 0 0.1 0 M28 4 a2 2 0 1 0 0.1 0 M8 25 L36 25",
+  libero: "M10 15 L34 15",
+  personalizzato: "M22 4 L34 15 L22 26 L10 15 Z M22 11 L22 19 M18 15 L26 15",
+  forza: "M22 2 L22 24 M17 18 L22 26 L27 18",
+  assiale: "M4 15 L34 15 M28 10 L36 15 L28 20",
+  distribuito: "M6 4 L38 4 M10 4 L10 22 M22 4 L22 22 M34 4 L34 22 M7 18 L10 23 L13 18 M19 18 L22 23 L25 18 M31 18 L34 23 L37 18",
+  momento: "M30 8 A10 10 0 1 1 14 8 M14 8 l-1 6 M14 8 l6 0",
+  bimomento: "M14 6 A9 9 0 0 0 14 24 M30 6 A9 9 0 0 1 30 24 M14 24 l4 -2 M30 6 l-4 2",
+  modale: "M6 22 Q14 2 22 15 T38 8",
+};
+const UNIT = { forza: "N", assiale: "N", distribuito: "N/mm", momento: "N·mm", bimomento: "N·mm² (gen.)", modale: "(gen.)" };
+const DIRS = { forza: ["+x", "-x", "+y", "-y", "+z", "-z"], distribuito: ["+x", "-x", "+y", "-y"], assiale: ["comp", "traz"], momento: ["Mx", "My", "Mz"], bimomento: ["+", "-"], modale: ["v", "w"] };
+const DLAB = { "+x": "+X", "-x": "−X", "+y": "+Y", "-y": "−Y", "+z": "+Z", "-z": "−Z", comp: "Compression", traz: "Tension", Mx: "about X", My: "about Y", Mz: "torque (Z)", "+": "positive", "-": "negative", v: "in-plane amplitude", w: "warping" };
+const PTS = { forza: [["G", "Centroid G"], ["C", "Shear centre C"], ["N", "At a node"], ["W", "On a wall"]], distribuito: [["G", "Centroid G"], ["C", "Shear centre C"], ["N", "Along a node line"], ["W", "Along a wall"]],
+  assiale: [["G", "Uniform (centroid)"], ["N", "At a node (eccentric)"]], momento: [["G", "Spread over the section"]], bimomento: [["G", "On the torsion mode"]], modale: [["G", "On the chosen mode"]] };
+const COMPNAME = ["transverse", "normal", "shear", "shear (2)"];
+
+// ---------- state ----------
+const S = {
+  tab: 1,
+  sec: { lib: "C150", xy: LIB[2].xy.map((p) => p.slice()), t: 2.2, E: 210000, nu: 0.3 },
+  sum: null, secErr: null, secBusy: false, secMs: 0, selNode: -1, undo: [], snap: 0.5, allModes: false,
+  L: 1500, ne: 25, supports: [], loads: [], selZ: 0,
+  riks: { lamMax: 1.3, nsteps: 200, dl0: 0.05, dsRel: 5 }, imp: { kind: "auto", eps: 1 },
+  cam2: { yaw: -0.62, pitch: 0.38, zoom: 1, px: 0, py: 0 }, cam3: { yaw: -0.62, pitch: 0.38, zoom: 1, px: 0, py: 0 },
+  res: null, // { spec, sum, steps: [{lam,d,neg,its,ms}], running, info, err, done }
+  view: { step: 0, follow: true, color: "u", scale: 1, showBC: true, showUndef: true, pick: null, comp: "y", genMode: 1, genComp: 1 },
+  stress: new Map(),
+  scheme: null,
+};
+const $ = (id) => document.getElementById(id);
+const fmt = (v, d = 3) => { if (v === null || v === undefined || !isFinite(v)) return "—"; const a = Math.abs(v); if (a !== 0 && (a < 1e-3 || a >= 1e5)) return v.toExponential(d - 1).replace("e+", "e"); return String(+v.toPrecision(Math.max(d, Math.ceil(Math.log10(a + 1e-30))))); };
+const fx = (v, d = 2) => (isFinite(v) ? v.toFixed(d) : "—");
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const Le = () => S.L / S.ne;
+const zToSt = (z) => Math.max(0, Math.min(S.ne, Math.round(z / Le())));
+const stToZ = (st) => st * Le();
+const snapZ = (z) => stToZ(zToSt(z));
+function setStatus(txt, cls = "") { const p = $("status"); p.textContent = txt; p.className = "pill " + cls; }
+
+// ---------- section analysis ----------
+let secTimer = null, secSeq = 0;
+function secValid(xy) {
+  if (xy.length < 4) return "At least 4 nodes (3 walls) are needed.";
+  for (let i = 0; i < xy.length - 1; i++) if (Math.hypot(xy[i + 1][0] - xy[i][0], xy[i + 1][1] - xy[i][1]) < 1) return `Wall ${i + 1}–${i + 2} too short.`;
+  if (!(S.sec.t > 0)) return "Invalid thickness.";
+  S.secWarn = null;
+  for (let i = 0; i < xy.length - 1; i++) { const b = Math.hypot(xy[i + 1][0] - xy[i][0], xy[i + 1][1] - xy[i][1]); if (b < 2 * S.sec.t) { S.secWarn = `Wall ${i + 1}–${i + 2} is short compared with the thickness (b < 2t): the thin-plate model is approximate.`; break; } }
+  return null;
+}
+function analyzeSection(delay = 350) {
+  clearTimeout(secTimer);
+  S.secErr = secValid(S.sec.xy);
+  if (S.secErr) { S.sum = null; renderSectionSide(); return; }
+  S.secBusy = true; renderSectionSide();
+  const seq = ++secSeq;
+  secTimer = setTimeout(async () => {
+    try {
+      if (!SECW) throw new Error("solver engine not available");
+      const r = await SECW.call({ type: "section", sec: secSpec() });
+      if (seq !== secSeq) return;
+      S.sum = r.summary; S.secMs = r.ms; S.secErr = null;
+      const key = JSON.stringify(secSpec());
+      if (!S.bench || S.bench.key !== key) SECW.call({ type: "bench", sec: secSpec() }).then((b) => { if (JSON.stringify(secSpec()) === key) { S.bench = { key, tK: b.tK, tSetup: b.tSetup }; if (S.tab === 2) renderModel(); } }).catch(() => {});
+    } catch (e) { if (seq !== secSeq) return; S.sum = null; S.secErr = "Section analysis failed: " + e.message; }
+    S.secBusy = false; renderSectionSide(); if (S.tab === 1) drawSvg(); if (S.tab === 2) renderModel();
+  }, delay);
+}
+const secSpec = () => ({ xy: S.sec.xy.map((p) => [+p[0], +p[1]]), t: +S.sec.t, E: +S.sec.E, nu: +S.sec.nu });
+function sectionChanged(push = true) {
+  S.example = null;
+  S.res = null; S.stress.clear(); S.sec.lib = null; S.sum = null;
+  // nodes referenced by loads may be gone
+  for (const l of S.loads) { if (l.node >= S.sec.xy.length) l.node = S.sec.xy.length - 1; if (l.wall >= S.sec.xy.length - 1) l.wall = S.sec.xy.length - 2; }
+  analyzeSection(); renderSection();
+}
+
+// ---------- geometry helpers (main thread) ----------
+function secGeom(xy) {
+  const walls = [], n = xy.length;
+  for (let i = 0; i < n - 1; i++) { const d = [xy[i + 1][0] - xy[i][0], xy[i + 1][1] - xy[i][1]], L = Math.hypot(...d), tau = [d[0] / L, d[1] / L]; walls.push({ a: i, c: i + 1, L, tau, nrm: [-tau[1], tau[0]] }); }
+  let A = 0, gx = 0, gy = 0; walls.forEach((w) => { A += w.L; gx += w.L * (xy[w.a][0] + xy[w.c][0]) / 2; gy += w.L * (xy[w.a][1] + xy[w.c][1]) / 2; });
+  const xs = xy.map((p) => p[0]), ys = xy.map((p) => p[1]);
+  return { walls, G: [gx / A, gy / A], bb: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)] };
+}
+function modeShape(xy, x, s, nsub = 8) {   // in-plane deformed polyline (Hermite normal + linear tangential), amplitude s
+  const n = xy.length, g = secGeom(xy), pts = [];
+  g.walls.forEach((w, k) => {
+    const pa = w.nrm[0] * x[2 * w.a] + w.nrm[1] * x[2 * w.a + 1], pc = w.nrm[0] * x[2 * w.c] + w.nrm[1] * x[2 * w.c + 1];
+    const ma = w.tau[0] * x[2 * w.a] + w.tau[1] * x[2 * w.a + 1], mc = w.tau[0] * x[2 * w.c] + w.tau[1] * x[2 * w.c + 1];
+    const tha = x[2 * n + w.a] || 0, thc = x[2 * n + w.c] || 0, L = w.L;
+    for (let j = k === 0 ? 0 : 1; j <= nsub; j++) { const u = j / nsub;
+      const h = [1 - 3 * u * u + 2 * u ** 3, L * (u - 2 * u * u + u ** 3), 3 * u * u - 2 * u ** 3, L * (-u * u + u ** 3)];
+      const psi = h[0] * pa + h[1] * tha + h[2] * pc + h[3] * thc, mu = (1 - u) * ma + u * mc;
+      const bx = xy[w.a][0] + u * (xy[w.c][0] - xy[w.a][0]), by = xy[w.a][1] + u * (xy[w.c][1] - xy[w.a][1]);
+      pts.push([bx + s * (psi * w.nrm[0] + mu * w.tau[0]), by + s * (psi * w.nrm[1] + mu * w.tau[1])]); }
+  });
+  return pts;
+}
+function modeName(sum, m) {
+  const k = sum.keys[m];
+  return k === "axial" ? "extension" : k === "bend1" || k === "bend2" ? "bending" : k === "tors" ? "torsion" : k === "dist" ? "distortional" : (sum.modes[m].group === "high" && m < 4 + (sum.n - 4) + 2 ? "local" : "transverse");
+}
+
+/* =============================== TAB 1 =============================== */
+const svg = $("secsvg"); let svgView = null, drag = null;
+function svgPt(ev) { const p = svg.createSVGPoint(); p.x = ev.clientX; p.y = ev.clientY; const q = p.matrixTransform(svg.getScreenCTM().inverse()); return [q.x, -q.y]; }
+function fitSvg() {
+  const g = secGeom(S.sec.xy), [x0, y0, x1, y1] = g.bb, w = Math.max(x1 - x0, 40), h = Math.max(y1 - y0, 40), m = 0.25 * Math.max(w, h);
+  svgView = [x0 - m, -(y1 + m), w + 2 * m, h + 2 * m];
+}
+function renderSection() {
+  // library
+  $("libList").innerHTML = LIB.map((s) => {
+    const g = secGeom(s.xy), [x0, y0, x1, y1] = g.bb, sc = 30 / Math.max(x1 - x0, y1 - y0, 1);
+    const pts = s.xy.map((p) => `${(4 + (p[0] - x0) * sc).toFixed(1)},${(34 - (p[1] - y0) * sc).toFixed(1)}`).join(" ");
+    return `<button class="scheme${S.sec.lib === s.id ? " pal on" : ""}" data-act="lib" data-id="${s.id}" style="flex-direction:row;min-height:0">
+      <svg width="40" height="38" viewBox="0 0 40 38" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="#1D4ED8" stroke-width="2" stroke-linejoin="round"/></svg>
+      <span>${esc(s.name)}<br><span class="muted">${s.xy.length} nodes · t ${s.t}</span></span></button>`;
+  }).join("");
+  $("in_t").value = S.sec.t; $("in_E").value = S.sec.E; $("in_nu").value = S.sec.nu;
+  $("nodeCount").textContent = `· ${S.sec.xy.length} nodes`;
+  $("nodeTable").innerHTML = `<tr><th>#</th><th>x [mm]</th><th>y [mm]</th></tr>` + S.sec.xy.map((p, i) =>
+    `<tr class="${i === S.selNode ? "sel" : ""}"><td>${i + 1}</td><td><input data-chg="node" data-i="${i}" data-c="0" value="${+p[0].toFixed(3)}"></td><td><input data-chg="node" data-i="${i}" data-c="1" value="${+p[1].toFixed(3)}"></td></tr>`).join("");
+  $("secTitle").textContent = (LIB.find((l) => l.id === S.sec.lib) || { name: "Custom section" }).name + ` · t = ${S.sec.t} mm`;
+  $("btnDel").disabled = S.selNode < 0 || S.sec.xy.length <= 4; $("btnUndo").disabled = !S.undo.length;
+  drawSvg(); renderSectionSide();
+}
+function drawSvg() {
+  if (!svgView) fitSvg();
+  const rc = svg.getBoundingClientRect();
+  if (rc.width > 0 && rc.height > 0) { const asp = rc.width / rc.height; let [x, y, w, h] = svgView; const cx = x + w / 2, cy = y + h / 2; if (w / h < asp) w = h * asp; else h = w / asp; svgView = [cx - w / 2, cy - h / 2, w, h]; }
+  const [vx, vy, vw, vh] = svgView, xy = S.sec.xy, g = secGeom(xy), u = rc.width > 0 ? vw / rc.width : vw / 600;
+  svg.setAttribute("viewBox", `${vx} ${vy} ${vw} ${vh}`);
+  const step = [1, 2, 5, 10, 20, 25, 50, 100, 200].find((s) => vw / s < 60) || 500;
+  let grid = "";
+  for (let x = Math.ceil(vx / step) * step; x < vx + vw; x += step) grid += `<line x1="${x}" y1="${vy}" x2="${x}" y2="${vy + vh}" stroke="${x === 0 ? "#CBD5E1" : "#F1F5F9"}" stroke-width="${u}"/>`;
+  for (let y = Math.ceil(vy / step) * step; y < vy + vh; y += step) grid += `<line x1="${vx}" y1="${y}" x2="${vx + vw}" y2="${y}" stroke="${y === 0 ? "#CBD5E1" : "#F1F5F9"}" stroke-width="${u}"/>`;
+  const P = (p) => `${p[0]},${-p[1]}`;
+  const thick = Math.max(S.sec.t, 2.5 * u);
+  let walls = g.walls.map((w, k) => `<line x1="${xy[w.a][0]}" y1="${-xy[w.a][1]}" x2="${xy[w.c][0]}" y2="${-xy[w.c][1]}" stroke="#1F2937" stroke-width="${thick}" stroke-linecap="round"/>
+     <line class="wallhit" data-w="${k}" x1="${xy[w.a][0]}" y1="${-xy[w.a][1]}" x2="${xy[w.c][0]}" y2="${-xy[w.c][1]}" stroke="transparent" stroke-width="${14 * u}" style="cursor:copy"/>`).join("");
+  const lab = (x, y, s, c) => `<text x="${x}" y="${-y}" font-size="${11 * u}" fill="${c}" font-family="system-ui">${s}</text>`;
+  let marks = "";
+  const sum = S.sum;
+  const cross = (p, c, s) => `<g stroke="${c}" stroke-width="${1.6 * u}"><line x1="${p[0] - 6 * u}" y1="${-p[1]}" x2="${p[0] + 6 * u}" y2="${-p[1]}"/><line x1="${p[0]}" y1="${-p[1] - 6 * u}" x2="${p[0]}" y2="${-p[1] + 6 * u}"/></g>${lab(p[0] + 7 * u, p[1] + 7 * u, s, c)}`;
+  marks += cross(g.G, "#047857", "G");
+  if (sum && sum.sc) marks += cross(sum.sc, "#7C3AED", "C");
+  const nodes = xy.map((p, i) => `<g class="node" data-i="${i}" style="cursor:grab"><circle cx="${p[0]}" cy="${-p[1]}" r="${(i === S.selNode ? 7 : 5.5) * u}" fill="${i === S.selNode ? "#1D4ED8" : "#fff"}" stroke="#1D4ED8" stroke-width="${2 * u}"/>
+     <circle cx="${p[0]}" cy="${-p[1]}" r="${12 * u}" fill="transparent"/>${lab(p[0] + 8 * u, p[1] + 8 * u, i + 1, "#6B7280")}</g>`).join("");
+  // axes
+  const ax = `<g stroke-width="${1.5 * u}"><line x1="${vx + 20 * u}" y1="${vy + vh - 20 * u}" x2="${vx + 55 * u}" y2="${vy + vh - 20 * u}" stroke="#C2410C"/><line x1="${vx + 20 * u}" y1="${vy + vh - 20 * u}" x2="${vx + 20 * u}" y2="${vy + vh - 55 * u}" stroke="#0F766E"/></g>
+    <text x="${vx + 58 * u}" y="${vy + vh - 16 * u}" font-size="${11 * u}" fill="#C2410C">x</text><text x="${vx + 16 * u}" y="${vy + vh - 58 * u}" font-size="${11 * u}" fill="#0F766E">y</text>
+    <text x="${vx + vw - 8 * u}" y="${vy + vh - 10 * u}" font-size="${10 * u}" fill="#9CA3AF" text-anchor="end">grid ${step} mm</text>`;
+  svg.innerHTML = grid + walls + marks + nodes + ax;
+}
+svg.addEventListener("pointerdown", (ev) => {
+  const nd = ev.target.closest(".node"), wl = ev.target.closest(".wallhit");
+  if (nd) { const i = +nd.dataset.i; S.selNode = i; drag = { i, moved: false, start: S.sec.xy[i].slice(), snapshot: S.sec.xy.map((p) => p.slice()) }; svg.setPointerCapture(ev.pointerId); renderSection(); return; }
+  if (wl) { const k = +wl.dataset.w, p = svgPt(ev), sn = S.snap; S.undo.push(S.sec.xy.map((q) => q.slice()));
+    S.sec.xy.splice(k + 1, 0, [Math.round(p[0] / sn) * sn, Math.round(p[1] / sn) * sn]); S.selNode = k + 1; shiftNodeRefs(k + 1, +1); sectionChanged(); return; }
+  drag = { pan: true, p0: [ev.clientX, ev.clientY], v0: svgView.slice() }; svg.setPointerCapture(ev.pointerId);
+});
+svg.addEventListener("pointermove", (ev) => {
+  if (!drag) return;
+  if (drag.pan) { const r = svg.getBoundingClientRect(), s = Math.max(svgView[2] / r.width, svgView[3] / r.height); svgView[0] = drag.v0[0] - (ev.clientX - drag.p0[0]) * s; svgView[1] = drag.v0[1] - (ev.clientY - drag.p0[1]) * s; drawSvg(); return; }
+  const p = svgPt(ev), sn = S.snap, q = [Math.round(p[0] / sn) * sn, Math.round(p[1] / sn) * sn];
+  if (q[0] !== S.sec.xy[drag.i][0] || q[1] !== S.sec.xy[drag.i][1]) { S.sec.xy[drag.i] = q; drag.moved = true; S.sum = null; drawSvg(); }
+});
+svg.addEventListener("pointerup", () => {
+  if (drag && !drag.pan && drag.moved) { S.undo.push(drag.snapshot); sectionChanged(); }
+  drag = null;
+});
+svg.addEventListener("wheel", (ev) => { ev.preventDefault(); const p = svgPt(ev), f = ev.deltaY > 0 ? 1.12 : 1 / 1.12;
+  svgView = [p[0] - (p[0] - svgView[0]) * f, -p[1] - (-p[1] - svgView[1]) * f, svgView[2] * f, svgView[3] * f]; drawSvg(); }, { passive: false });
+svg.addEventListener("dblclick", () => { fitSvg(); drawSvg(); });
+function shiftNodeRefs(at, d) { for (const l of S.loads) { if (l.node >= at) l.node = Math.max(0, l.node + d); if (l.wall >= at - (d > 0 ? 1 : 0)) l.wall = Math.max(0, l.wall + d); } }
+function renderSectionSide() {
+  const sum = S.sum, box = $("secProps");
+  if (S.secErr) { box.innerHTML = `<div class="note err">${esc(S.secErr)}</div>`; $("modeGrid").innerHTML = ""; return; }
+  if (!sum || sum.n !== S.sec.xy.length) { box.innerHTML = `<div class="note">Analysing the section…</div>`; $("modeGrid").innerHTML = ""; return; }
+  const n = sum.n;
+  box.innerHTML = `<div class="kv">
+    <span>Area A</span><span>${fmt(sum.A)} mm²</span>
+    <span>Centroid G</span><span>(${fx(sum.G[0], 1)}, ${fx(sum.G[1], 1)})</span>
+    <span>Shear centre C</span><span>${sum.sc ? `(${fx(sum.sc[0], 1)}, ${fx(sum.sc[1], 1)})` : "—"}</span>
+    <span>I<sub>x</sub> · I<sub>y</sub></span><span>${fmt(sum.Ixx)} · ${fmt(sum.Iyy)} mm⁴</span>
+    <span>J (St. Venant)</span><span>${fmt(sum.J)} mm⁴</span>
+    <span>Nodes · modes</span><span>${n} · ${sum.M}</span>
+    <span>Dofs per section</span><span>${3 * n}</span>
+    <span>Section analysis</span><span>${fx(S.secMs / 1000, 2)} s</span></div>
+    ${S.secWarn ? `<div class="note warn" style="margin-top:6px">${esc(S.secWarn)}</div>` : ""}${S.secBusy ? `<div class="muted">updating…</div>` : ""}`;
+  const xy = S.sec.xy, g = secGeom(xy), [x0, y0, x1, y1] = g.bb, D = Math.max(x1 - x0, y1 - y0, 1), sc = 70 / (D * 1.5);
+  const show = S.allModes ? sum.M : Math.min(sum.M, 4 + Math.max(0, n - 4) + 2);
+  let html = "";
+  for (let m = 0; m < show; m++) {
+    const md = sum.modes[m], tr = (p) => [(46 + (p[0] - (x0 + x1) / 2) * sc), (46 - (p[1] - (y0 + y1) / 2) * sc)];
+    const base = xy.map((p) => tr(p).map((v) => v.toFixed(1)).join(",")).join(" ");
+    let def = "", dots = "";
+    if (md.has_v) { let um = 0; for (let i = 0; i < n; i++) um = Math.max(um, Math.hypot(md.x[2 * i], md.x[2 * i + 1])); const pts = modeShape(xy, md.x, 0.22 * D / (um || 1)); def = `<polyline points="${pts.map((p) => tr(p).map((v) => v.toFixed(1)).join(",")).join(" ")}" fill="none" stroke="#1D4ED8" stroke-width="1.8" stroke-linejoin="round"/>`; }
+    if (md.has_w) { const pm = Math.max(...md.phi.map(Math.abs)) || 1; dots = xy.map((p, i) => { const [a, b] = tr(p), v = md.phi[i] / pm; return Math.abs(v) < 0.02 ? "" : `<circle cx="${a.toFixed(1)}" cy="${b.toFixed(1)}" r="${(1 + 2.6 * Math.abs(v)).toFixed(1)}" fill="${v > 0 ? "#DC2626" : "#2563EB"}" opacity="0.7"/>`; }).join(""); }
+    html += `<div class="mode" title="mode ${m + 1}: ${modeName(sum, m)}${md.has_w ? " · circles = warping (red +, blue −)" : ""}"><svg viewBox="0 0 92 92"><polyline points="${base}" fill="none" stroke="#D1D5DB" stroke-width="1.4"/>${def}${dots}</svg>${m + 1} · ${modeName(sum, m)}</div>`;
+  }
+  $("modeGrid").innerHTML = html;
+  $("btnAllModes").textContent = S.allModes ? "show the main ones" : `show all (${sum.M})`;
+}
+
+/* =============================== 3D VIEW =============================== */
+function makeCam(cv, camKey, onClick, redraw) {
+  let st = null;
+  cv.addEventListener("pointerdown", (e) => { st = { x: e.clientX, y: e.clientY, moved: false, pan: e.shiftKey || e.button === 2, c: { ...S[camKey] } }; cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener("pointermove", (e) => { if (!st) return; const dx = e.clientX - st.x, dy = e.clientY - st.y; if (Math.abs(dx) + Math.abs(dy) > 3) st.moved = true; if (!st.moved) return;
+    const c = S[camKey]; if (st.pan) { c.px = st.c.px + dx; c.py = st.c.py + dy; } else { c.yaw = st.c.yaw + dx * 0.008; c.pitch = Math.max(-1.5, Math.min(1.5, st.c.pitch + dy * 0.008)); } redraw(); });
+  cv.addEventListener("pointerup", (e) => { if (st && !st.moved) { const r = cv.getBoundingClientRect(); onClick(e.clientX - r.left, e.clientY - r.top); } st = null; });
+  cv.addEventListener("contextmenu", (e) => e.preventDefault());
+  cv.addEventListener("wheel", (e) => { e.preventDefault(); S[camKey].zoom *= e.deltaY > 0 ? 1 / 1.12 : 1.12; redraw(); }, { passive: false });
+  cv.addEventListener("dblclick", () => { Object.assign(S[camKey], { zoom: 1, px: 0, py: 0 }); redraw(); });
+}
+function fitCanvas(cv) { const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1, w = Math.max(10, Math.round(r.width * dpr)), h = Math.max(10, Math.round(r.height * dpr));
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; } const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); return { ctx, W: r.width, H: r.height }; }
+// projector: world (x, y, z) -> screen; beam axis z horizontal on screen, y up
+function projector(cam, W, H, L, xy) {
+  const g = secGeom(xy), [x0, y0, x1, y1] = g.bb, xc = (x0 + x1) / 2, yc = (y0 + y1) / 2;
+  const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw), cp = Math.cos(cam.pitch), sp = Math.sin(cam.pitch);
+  const R = (x, y, z) => { const E = z - L / 2, U = y - yc, N = x - xc, sx = cy * E - sy * N, d = sy * E + cy * N; return [sx, U * cp + d * sp, -U * sp + d * cp]; };
+  let mx = 1e-9, my = 1e-9;
+  for (const x of [x0, x1]) for (const y of [y0, y1]) for (const z of [0, L]) { const r = R(x, y, z); mx = Math.max(mx, Math.abs(r[0])); my = Math.max(my, Math.abs(r[1])); }
+  const s = Math.min(0.38 * W / mx, 0.34 * H / my) * cam.zoom, ox = W / 2 + cam.px, oy = H / 2 + cam.py;
+  const P = (x, y, z) => { const r = R(x, y, z); return [ox + s * r[0], oy - s * r[1], r[2]]; };
+  return { P, R, s, light: (() => { const l = [0.35, 0.55, -0.75], n = Math.hypot(...l); return l.map((v) => v / n); })() };
+}
+function cmap(t, kind) {  // t in [0,1]
+  t = Math.max(0, Math.min(1, t));
+  const stops = kind === "div" ? [[37, 99, 235], [147, 197, 253], [248, 250, 252], [252, 165, 165], [220, 38, 38]] : [[68, 1, 84], [59, 82, 139], [33, 145, 140], [94, 201, 98], [253, 231, 37]];
+  const f = t * (stops.length - 1), i = Math.min(stops.length - 2, Math.floor(f)), u = f - i;
+  return stops[i].map((c, k) => c + u * (stops[i + 1][k] - c));
+}
+// draw a GBT member as shaded thin-walled surface. pos(st, i) -> [x,y,z]; val(j, w, xm) -> scalar or null
+function drawMember(ctx, pr, ns, nn, pos, opt = {}) {
+  const quads = [], nsub = opt.nsub || 1, light = pr.light;
+  for (let j = 0; j < ns - 1; j++) for (let w = 0; w < nn - 1; w++) for (let k = 0; k < nsub; k++) {
+    const x0 = k / nsub, x1 = (k + 1) / nsub;
+    let c;
+    if (opt.wallPos) c = [opt.wallPos(j, w, x0), opt.wallPos(j, w, x1), opt.wallPos(j + 1, w, x1), opt.wallPos(j + 1, w, x0)];
+    else { const A = pos(j, w), B = pos(j, w + 1), C = pos(j + 1, w + 1), D = pos(j + 1, w);
+      const lp = (p, q, x) => [p[0] + x * (q[0] - p[0]), p[1] + x * (q[1] - p[1]), p[2] + x * (q[2] - p[2])];
+      c = [lp(A, B, x0), lp(A, B, x1), lp(D, C, x1), lp(D, C, x0)]; }
+    const sp = c.map((p) => pr.P(...p));
+    const r = c.map((p) => pr.R(...p)), e1 = r[2].map((v, i) => v - r[0][i]), e2 = r[3].map((v, i) => v - r[1][i]);
+    const nr = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]], nl = Math.hypot(...nr) || 1;
+    const sh = Math.abs((nr[0] * light[0] + nr[1] * light[1] + nr[2] * light[2]) / nl);
+    const v = opt.val ? opt.val(j, w, (x0 + x1) / 2) : null;
+    quads.push({ sp, d: (sp[0][2] + sp[1][2] + sp[2][2] + sp[3][2]) / 4, sh, v });
+  }
+  quads.sort((a, b) => b.d - a.d);
+  for (const q of quads) {
+    let col;
+    if (q.v !== null && q.v !== undefined && opt.range) { const t = (q.v - opt.range[0]) / ((opt.range[1] - opt.range[0]) || 1); col = cmap(t, opt.kind); const f = 0.62 + 0.38 * q.sh; col = col.map((c) => c * f); }
+    else { const f = 0.45 + 0.55 * q.sh; col = (opt.base || [96, 140, 210]).map((c) => c * f + (1 - f) * 40); }
+    const cs = `rgba(${col[0] | 0},${col[1] | 0},${col[2] | 0},${opt.alpha ?? 1})`;
+    ctx.beginPath(); ctx.moveTo(q.sp[0][0], q.sp[0][1]); for (let i = 1; i < 4; i++) ctx.lineTo(q.sp[i][0], q.sp[i][1]); ctx.closePath();
+    ctx.fillStyle = cs; ctx.fill(); ctx.strokeStyle = cs; ctx.lineWidth = 0.6; ctx.stroke();
+  }
+  // end sections outline
+  ctx.strokeStyle = opt.edge || "rgba(17,24,39,0.85)"; ctx.lineWidth = 1.4;
+  for (const j of [0, ns - 1]) { ctx.beginPath();
+    if (opt.wallPos) { let first = true; for (let w = 0; w < nn - 1; w++) for (let k = 0; k <= nsub; k++) { const p = pr.P(...opt.wallPos(j, w, k / nsub)); first ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1]); first = false; } }
+    else for (let i = 0; i < nn; i++) { const p = pr.P(...pos(j, i)); i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); }
+    ctx.stroke(); }
+}
+function drawGhost(ctx, pr, ns, nn, pos) {   // undeformed wireframe
+  ctx.strokeStyle = "rgba(107,114,128,0.35)"; ctx.lineWidth = 1;
+  for (const j of [0, ns - 1]) { ctx.beginPath(); for (let i = 0; i < nn; i++) { const p = pr.P(...pos(j, i)); i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); } ctx.stroke(); }
+  for (let i = 0; i < nn; i++) { const a = pr.P(...pos(0, i)), b = pr.P(...pos(ns - 1, i)); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+}
+function arrow(ctx, a, b, col, w = 2.2, head = 9) {
+  const ang = Math.atan2(b[1] - a[1], b[0] - a[0]);
+  ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0] - 0.6 * head * Math.cos(ang), b[1] - 0.6 * head * Math.sin(ang)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(b[0], b[1]); ctx.lineTo(b[0] - head * Math.cos(ang - 0.4), b[1] - head * Math.sin(ang - 0.4)); ctx.lineTo(b[0] - head * Math.cos(ang + 0.4), b[1] - head * Math.sin(ang + 0.4)); ctx.closePath(); ctx.fill();
+}
+function iconAt(ctx, path, x, y, col, scale = 1, fill = null) {
+  ctx.save(); ctx.translate(x - 22 * scale, y); ctx.scale(scale, scale); const p = new Path2D(path);
+  if (fill) { ctx.fillStyle = fill; ctx.fill(p); } ctx.strokeStyle = col; ctx.lineWidth = 1.8 / scale; ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.stroke(p); ctx.restore();
+}
+// supports and loads glyphs; disp(st) -> translation of station (results), nodePos(st,i) for node anchors
+function loadAnchor(l, xy, sum) {
+  const g = secGeom(xy);
+  if (l.pt === "N") return xy[l.node] || g.G;
+  if (l.pt === "W") { const w = g.walls[l.wall] || g.walls[0]; return [(xy[w.a][0] + xy[w.c][0]) / 2, (xy[w.a][1] + xy[w.c][1]) / 2]; }
+  if (l.pt === "C" && sum && sum.sc) return sum.sc;
+  return g.G;
+}
+function drawBC(ctx, pr, model, xy, sum, nodePos, opts = {}) {
+  const g = secGeom(xy), [x0, y0, x1, y1] = g.bb, D = Math.max(x1 - x0, y1 - y0), Le_ = model.L / model.ne;
+  const sh = (st) => { if (!nodePos) return [0, 0, 0]; let a = [0, 0, 0]; for (let i = 0; i < xy.length; i++) { const p = nodePos(st, i); a[0] += p[0] - xy[i][0]; a[1] += p[1] - xy[i][1]; a[2] += p[2] - st * Le_; } return a.map((v) => v / xy.length); };
+  for (const s of model.supports) {
+    const st = Math.round(s.z / Le_), t = sh(st), z = st * Le_;
+    if (s.kind === "incastro") { ctx.fillStyle = "rgba(55,65,81,0.18)"; ctx.strokeStyle = "rgba(55,65,81,0.7)"; ctx.lineWidth = 1.2; ctx.beginPath();
+      const m = 0.18 * D, cs = [[x0 - m, y0 - m], [x1 + m, y0 - m], [x1 + m, y1 + m], [x0 - m, y1 + m]].map(([x, y]) => pr.P(x + t[0], y + t[1], z + t[2]));
+      cs.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]))); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.save(); ctx.clip(); ctx.beginPath(); const bx = Math.min(...cs.map((p) => p[0])), by = Math.min(...cs.map((p) => p[1])), Bx = Math.max(...cs.map((p) => p[0])), By = Math.max(...cs.map((p) => p[1]));
+      for (let k = bx - (By - by); k < Bx; k += 9) { ctx.moveTo(k, By); ctx.lineTo(k + (By - by), by); } ctx.strokeStyle = "rgba(55,65,81,0.35)"; ctx.stroke(); ctx.restore();
+    } else {
+      const p = pr.P(g.G[0] + t[0], y0 - 0.12 * D + t[1], z + t[2]);
+      iconAt(ctx, ICON[s.kind] || ICON.personalizzato, p[0], p[1], "#374151", 1, s.kind === "libero" ? null : "rgba(255,255,255,0.85)");
+    }
+  }
+  const V = { "+x": [1, 0, 0], "-x": [-1, 0, 0], "+y": [0, 1, 0], "-y": [0, -1, 0], "+z": [0, 0, 1], "-z": [0, 0, -1] }, col = "#C2410C", AL = 1.1 * D;
+  const label = (p, s) => { ctx.font = "600 12px system-ui"; ctx.fillStyle = col; ctx.fillText(s, p[0] + 6, p[1] - 6); };
+  for (const l of model.loads) {
+    const st = Math.round(l.z / Le_), z = st * Le_, an = loadAnchor(l, xy, sum);
+    const at = (stt, dx = 0, dy = 0, dz = 0) => { const t = l.pt === "N" && nodePos ? (() => { const q = nodePos(stt, l.node); return [q[0] - xy[l.node][0], q[1] - xy[l.node][1], q[2] - stt * Le_]; })() : sh(stt); return pr.P(an[0] + t[0] + dx, an[1] + t[1] + dy, stt * Le_ + t[2] + dz); };
+    const sgn = l.val < 0 ? -1 : 1;
+    if (l.k === "forza") { const v = (l.vec || V[l.dir]).map((c) => c * sgn); arrow(ctx, at(st, -v[0] * AL, -v[1] * AL, -v[2] * AL), at(st), col); label(at(st, -v[0] * AL, -v[1] * AL, -v[2] * AL), l.perturb ? "δ·λ" : "P·λ"); }
+    if (l.k === "assiale") { const s = (l.dir === "comp" ? -1 : 1) * sgn, tail = s < 0 ? AL * 1.2 : 0.1 * AL, tip = s < 0 ? 0.05 * AL : AL * 1.3, dz = z > model.L / 2 ? 1 : -1;
+      arrow(ctx, at(st, 0, 0, dz * tail), at(st, 0, 0, dz * tip), col); label(at(st, 0, 0, dz * Math.max(tail, tip)), "N·λ"); }
+    if (l.k === "distribuito") { const v = V[l.dir].map((c) => c * sgn), nA = Math.min(model.ne, 12); let prev = null;
+      for (let k = 0; k <= nA; k++) { const s2 = Math.round(k * model.ne / nA), a = at(s2, -v[0] * 0.8 * AL, -v[1] * 0.8 * AL), b = at(s2); arrow(ctx, a, b, col, 1.6, 7); if (prev) { ctx.beginPath(); ctx.moveTo(prev[0], prev[1]); ctx.lineTo(a[0], a[1]); ctx.stroke(); } prev = a; }
+      label(at(Math.round(model.ne / 2), -v[0] * 0.8 * AL, -v[1] * 0.8 * AL), "q·λ"); }
+    if (l.k === "momento" || l.k === "bimomento" || l.k === "modale") { const p = at(st); ctx.strokeStyle = col; ctx.lineWidth = 2.2;
+      if (l.k === "momento") { ctx.beginPath(); ctx.arc(p[0], p[1], 22, -2.6, 1.9); ctx.stroke(); const e = [p[0] + 22 * Math.cos(1.9), p[1] + 22 * Math.sin(1.9)]; arrow(ctx, [e[0] + 6, e[1] - 4], e, col); label([p[0] + 18, p[1] - 18], `${l.dir}·λ`); }
+      else { iconAt(ctx, ICON[l.k], p[0], p[1] - 15, col, 1); label([p[0] + 14, p[1] - 18], l.k === "bimomento" ? "B·λ" : "Q·λ"); } }
+  }
+}
+
+/* =============================== TAB 2 =============================== */
+const cv2 = $("cv2");
+makeCam(cv2, "cam2", (x, y) => {   // pick nearest station
+  const { W, H } = fitCanvas(cv2), pr = projector(S.cam2, W, H, S.L, S.sec.xy), G = secGeom(S.sec.xy).G; let best = 0, bd = 1e18;
+  for (let st = 0; st <= S.ne; st++) { const p = pr.P(G[0], G[1], stToZ(st)), d = (p[0] - x) ** 2 + (p[1] - y) ** 2; if (d < bd) { bd = d; best = st; } }
+  S.selZ = stToZ(best); renderModel();
+}, () => drawModel3D());
+function drawModel3D() {
+  const { ctx, W, H } = fitCanvas(cv2); ctx.clearRect(0, 0, W, H);
+  const xy = S.sec.xy, n = xy.length, pr = projector(S.cam2, W, H, S.L, xy), ns = Math.min(S.ne, 60) + 1;
+  const pos = (j, i) => [xy[i][0], xy[i][1], S.L * j / (ns - 1)];
+  drawMember(ctx, pr, ns, n, pos, { nsub: 1 });
+  // element divisions (light)
+  ctx.strokeStyle = "rgba(255,255,255,0.35)"; ctx.lineWidth = 0.7;
+  if (S.ne <= 120) for (let st = 1; st < S.ne; st++) { ctx.beginPath(); for (let i = 0; i < n; i++) { const p = pr.P(xy[i][0], xy[i][1], stToZ(st)); i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); } ctx.stroke(); }
+  // selected section
+  const z = S.selZ, g = secGeom(xy), [x0, y0, x1, y1] = g.bb, m = 0.3 * Math.max(x1 - x0, y1 - y0);
+  ctx.fillStyle = "rgba(29,78,216,0.10)"; ctx.strokeStyle = "rgba(29,78,216,0.6)"; ctx.lineWidth = 1; ctx.beginPath();
+  [[x0 - m, y0 - m], [x1 + m, y0 - m], [x1 + m, y1 + m], [x0 - m, y1 + m]].forEach(([x, y], i) => { const p = pr.P(x, y, z); i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); }); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = "#1D4ED8"; ctx.lineWidth = 3; ctx.beginPath(); xy.forEach((q, i) => { const p = pr.P(q[0], q[1], z); i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); }); ctx.stroke();
+  const tp = pr.P(x1 + m, y1 + m, z); ctx.font = "600 12px system-ui"; ctx.fillStyle = "#1D4ED8"; ctx.fillText(`z = ${fx(z, 1)} mm`, tp[0] + 4, tp[1] - 4);
+  drawBC(ctx, pr, { L: S.L, ne: S.ne, supports: S.supports, loads: S.loads }, xy, S.sum, null);
+  // triad
+  const o = [46, H - 40], tr = [[[1, 0, 0], "x", "#C2410C"], [[0, 1, 0], "y", "#0F766E"], [[0, 0, 1], "z", "#111827"]];
+  for (const [v, s, c] of tr) { const r = pr.R(v[0] * 1, v[1] * 1, S.L / 2 + v[2] * 1), r0 = pr.R(0, 0, S.L / 2), d = [r[0] - r0[0], -(r[1] - r0[1])], nl = Math.hypot(...d) || 1, e = [o[0] + 26 * d[0] / nl, o[1] + 26 * d[1] / nl];
+    arrow(ctx, o, e, c, 1.6, 6); ctx.fillStyle = c; ctx.font = "12px system-ui"; ctx.fillText(s, e[0] + 3, e[1] + 3); }
+}
+function supAt(z) { return S.supports.find((s) => Math.abs(s.z - z) < 1e-6); }
+function loadDesc(l) {
+  const where = l.k === "distribuito" ? "whole beam" : `z = ${fx(l.z, 0)}`;
+  const pt = l.pt === "N" ? `node ${l.node + 1}` : l.pt === "W" ? `wall ${l.wall + 1}–${l.wall + 2}` : l.pt === "C" ? "shear centre" : l.k === "forza" || l.k === "distribuito" ? "centroid" : "";
+  const what = l.k === "modale" ? `mode ${l.mode + 1} · ${DLAB[l.dir]}` : DLAB[l.dir];
+  return { t: `${NAMES[l.k]} ${fmt(l.val)} ${UNIT[l.k]}`, s: `${what}${pt ? " · " + pt : ""} · ${where}` };
+}
+/* run-time estimate: per Riks step ~2.8 tangent evaluations (element tangents + banded LDLt), calibrated on the paper examples */
+function estimate(ne = S.ne) {
+  const b = S.bench; if (!b || b.key !== JSON.stringify(secSpec())) return null;
+  const n = S.sec.xy.length, ndof = (ne + 1) * 3 * n, bw = 6 * n;
+  const perStep = 2.8 * (ne * b.tK + ndof * bw * bw / 1.5e6) / 1000;   // s
+  const r = S.riks, ex = S.example && EXAMPLES[S.example];
+  const stepsMax = +r.nsteps | 0, steps = ex ? ex.steps : S.imp.kind !== "none" && S.imp.eps > 0 ? stepsMax : Math.min(stepsMax, Math.ceil(1.5 * r.lamMax / (r.dl0 * Math.max(1, r.dsRel))) + 15);
+  const setup = (b.tSetup + 3 * n * n) / 1000;
+  return { perStep, steps, stepsMax, total: setup + perStep * steps, max: setup + perStep * stepsMax, ndof, known: !!ex };
+}
+const dur = (s) => (!isFinite(s) ? "—" : s < 1 ? "< 1 s" : s < 90 ? `${Math.round(s)} s` : s < 5400 ? `${Math.round(s / 60)} min` : `${(s / 3600).toFixed(1)} h`);
+const clock = (s) => { s = Math.max(0, Math.round(s)); const m = Math.floor(s / 60); return m >= 60 ? `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}` : `${m}:${String(s % 60).padStart(2, "0")}`; };
+const SLOW = 45;   // s: above this the user is warned before starting
+function renderEstimate() {
+  const e = estimate(), box = $("estBox"); if (!box) return;
+  if (!e) { box.innerHTML = S.sum ? `<div class="muted">estimating the run time…</div>` : ""; return; }
+  const cls = e.total > 300 ? "warn" : e.total > SLOW ? "warn" : "";
+  box.innerHTML = `<div class="note ${cls}"><b>Estimated run time: ${e.known ? "" : "≈ "}${dur(e.total)}</b><br>${fx(e.perStep, e.perStep < 1 ? 2 : 1)} s per step · ${e.known ? `${e.steps} steps (as in the technical note)` : (e.steps >= e.stepsMax ? `up to ${e.stepsMax} steps` : `≈ ${e.steps} steps`)}${!e.known && e.stepsMax > e.steps ? ` · at most ${dur(e.max)} (${e.stepsMax} steps)` : ""}${ENGINE === "inline" ? `<br>The solver runs in the page: it will stay frozen until the end.` : ""}</div>`;
+}
+function checks() {
+  const out = [];
+  if (S.example && EXAMPLES[S.example]) out.push(["ok", EXAMPLES[S.example].note]);
+  if (!S.sum) out.push(["warn", "Section not analysed yet."]);
+  if (!S.supports.length) out.push(["err", "No supports: the beam is a mechanism."]);
+  if (!S.loads.length) out.push(["err", "No load applied."]);
+  if (Le() > 60 && !S.example) out.push(["warn", `Elements ${fx(Le(), 0)} mm long (> 60 mm): local modes may be missed. Increase the number of elements.`]);
+  const ndof = (S.ne + 1) * 3 * S.sec.xy.length; if (ndof > 6000) out.push(["warn", `${ndof} degrees of freedom: the analysis may take several minutes.`]);
+  return out;
+}
+function renderModel() {
+  S.selZ = snapZ(S.selZ);
+  const lib = LIB.find((l) => l.id === S.sec.lib);
+  $("beamTitle").textContent = lib ? lib.name : `Custom section · t = ${S.sec.t}`;
+  $("in_L").value = S.L; $("in_ne").value = S.ne;
+  const zr = $("zrange"); zr.max = S.ne; zr.value = zToSt(S.selZ); $("zlab").textContent = `${fx(S.selZ, 1)} mm · station ${zToSt(S.selZ)}`;
+  const ndof = (S.ne + 1) * 3 * S.sec.xy.length;
+  $("leInfo").innerHTML = `L<sub>e</sub> = ${fx(Le(), 1)} mm · ${ndof} dofs`;
+  $("leInfo").style.color = Le() > 60 ? "var(--warn)" : "";
+  $("zquick").innerHTML = [["A", 0], ["L/2", S.L / 2], ["B", S.L]].map(([lab, z]) => `<button class="${Math.abs(snapZ(z) - S.selZ) < 1e-6 ? "on" : ""}" data-act="selz" data-z="${z}">${lab}</button>`).join("");
+  // schemes
+  $("schemeList").innerHTML = Object.entries(SCHEMES).map(([k, s]) => `<button class="scheme${S.scheme === k ? " pal on" : ""}" style="flex-direction:row;min-height:0" data-act="scheme" data-k="${k}">
+     <svg width="92" height="34" viewBox="0 0 92 34" aria-hidden="true" style="flex:none"><path d="${s.icon}" fill="none" stroke="#374151" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="${s.load}" fill="none" stroke="#C2410C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>${s.label}</span></button>`).join("");
+  const here = supAt(S.selZ);
+  $("supPal").innerHTML = SUPK.map((k) => `<button class="pal${(here ? here.kind === k : k === "libero") ? " on" : ""}" data-act="sup" data-k="${k}" title="${esc(SUPDESC[k])}"><svg width="44" height="30" viewBox="0 0 44 30" aria-hidden="true"><path d="${ICON[k]}" fill="none" stroke="#374151" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>${NAMES[k].replace(" (forcella)", "")}</button>`).join("")
+    + `<button class="pal" data-act="supModal" style="grid-column:span 2;flex-direction:row;justify-content:center;min-height:0;padding:8px">Custom support…</button>`;
+  $("loadPal").innerHTML = ["forza", "assiale", "distribuito", "momento", "bimomento", "modale"].map((k) => `<button class="pal" data-act="newLoad" data-k="${k}"><svg width="44" height="30" viewBox="0 0 44 30" aria-hidden="true"><path d="${ICON[k]}" fill="none" stroke="#C2410C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>${NAMES[k].replace(" (GBT)", "")}</button>`).join("");
+  // here box
+  $("hereTitle").textContent = `At section z = ${fx(S.selZ, 1)} mm`;
+  const lh = S.loads.map((l, i) => [l, i]).filter(([l]) => l.k !== "distribuito" && Math.abs(snapZ(l.z) - S.selZ) < 1e-6);
+  $("hereBox").innerHTML = `<div class="item sel"><svg width="34" height="24" viewBox="0 0 44 30"><path d="${ICON[here ? here.kind : "libero"]}" fill="none" stroke="#374151" stroke-width="1.8"/></svg><div class="grow"><b>${here ? NAMES[here.kind] : "No support"}</b><br><span class="muted">${here ? esc(SUPDESC[here.kind] || fixSummary(here.fix)) : "choose a support on the left"}</span></div>${here ? `<button class="btn sm" data-act="supModal">Edit</button>` : ""}</div>`
+    + lh.map(([l, i]) => { const d = loadDesc(l); return `<div class="item sel"><span class="dot" style="background:var(--load)"></span><div class="grow"><b>${d.t}</b><br><span class="muted">${d.s}</span></div><button class="btn sm" data-act="editLoad" data-i="${i}">Edit</button></div>`; }).join("");
+  $("supList").innerHTML = S.supports.length ? [...S.supports].sort((a, b) => a.z - b.z).map((s) => `<div class="item${Math.abs(s.z - S.selZ) < 1e-6 ? " sel" : ""}"><svg width="30" height="22" viewBox="0 0 44 30"><path d="${ICON[s.kind] || ICON.personalizzato}" fill="none" stroke="#374151" stroke-width="2"/></svg><div class="grow" data-act="selz" data-z="${s.z}" style="cursor:pointer"><b>${NAMES[s.kind]}</b> <span class="z">z = ${fx(s.z, 0)}</span></div><button class="btn sm" data-act="delSup" data-z="${s.z}" title="Remove">✕</button></div>`).join("") : `<div class="muted">none</div>`;
+  $("loadList").innerHTML = S.loads.length ? S.loads.map((l, i) => { const d = loadDesc(l); return `<div class="item"><span class="dot" style="background:var(--load)"></span><div class="grow" data-act="editLoad" data-i="${i}" style="cursor:pointer"><b>${d.t}</b><br><span class="muted">${d.s}</span></div><button class="btn sm" data-act="delLoad" data-i="${i}" title="Remove">✕</button></div>`; }).join("") : `<div class="muted">none</div>`;
+  for (const k of ["lamMax", "nsteps", "dl0", "dsRel"]) $("in_" + k).value = S.riks[k];
+  $("in_impk").value = S.imp.kind; $("in_impe").value = S.imp.eps;
+  $("impNote").textContent = S.imp.kind === "none" ? "Without perturbation the path stays on the fundamental branch beyond bifurcation (negative pivots reveal it)." : "Perturbation force (or torque) at mid-span, proportional to λ: it triggers the buckled branch.";
+  $("checkBox").innerHTML = checks().map(([c, t]) => `<div class="note ${c}">${esc(t)}</div>`).join("");
+  $("btnSolve").disabled = !S.sum || !S.supports.length || !S.loads.length || (S.res && S.res.running);
+  renderEstimate();
+  drawModel3D();
+}
+function fixSummary(f) { const parts = []; for (const [g, lab] of GROUPS) { const a = f[g] || {}; if (a.v || a.w) parts.push(`${lab.toLowerCase()}${a.v && a.w ? "" : a.v ? " (in-plane)" : " (warping)"}`); } return parts.length ? "restrained: " + parts.join(", ") : "no mode restrained"; }
+
+// quick schemes, examples
+function Imin() { const s = S.sum; if (!s) return 1; const a = s.Iyy, b = s.Ixx, c = s.Ixy; return (a + b) / 2 - Math.sqrt(((a - b) / 2) ** 2 + c * c); }
+const SCHEMES = {
+  pp_punta: { label: "Simply supported · axial compression", icon: "M8 16 L84 16 M8 16 l-5 8 l10 0 Z M3 27 L13 27 M84 16 l-5 8 l10 0 Z M81 27 a1.5 1.5 0 1 0 0.1 0 M87 27 a1.5 1.5 0 1 0 0.1 0", load: "M91 16 L86 16 M88 13 L85 16 L88 19",
+    make() { const P = Math.PI ** 2 * S.sec.E * Imin() / S.L ** 2; return { sup: [["appoggio", 0], ["carrello", S.L]], loads: [{ k: "assiale", dir: "comp", pt: "G", val: round2(P), z: S.L }], riks: { lamMax: 1.3, nsteps: 200, dl0: 0.05, dsRel: 5 }, imp: { kind: "auto", eps: 1 } }; } },
+  ms_forza: { label: "Cantilever · tip force (shear centre)", icon: "M8 4 L8 28 M8 8 l-5 4 M8 16 l-5 4 M8 24 l-5 4 M8 16 L84 16", load: "M84 2 L84 14 M81 10 L84 14 L87 10",
+    make() { const P = 0.03 * S.sec.E * (S.sum ? S.sum.Ixx : 1) / S.L ** 2; return { sup: [["incastro", 0]], loads: [{ k: "forza", dir: "-y", pt: "C", val: round2(P), z: S.L }], riks: { lamMax: 15, nsteps: 300, dl0: 0.05, dsRel: 2 }, imp: { kind: "none", eps: 1 } }; } },
+  pp_dist: { label: "Simply supported · distributed load", icon: "M8 16 L84 16 M8 16 l-5 8 l10 0 Z M3 27 L13 27 M84 16 l-5 8 l10 0 Z M81 27 a1.5 1.5 0 1 0 0.1 0 M87 27 a1.5 1.5 0 1 0 0.1 0", load: "M8 4 L84 4 M20 4 L20 13 M38 4 L38 13 M56 4 L56 13 M74 4 L74 13",
+    make() { const q = (S.L / 250) * 384 * S.sec.E * (S.sum ? S.sum.Ixx : 1) / (5 * S.L ** 4); return { sup: [["appoggio", 0], ["carrello", S.L]], loads: [{ k: "distribuito", dir: "-y", pt: "C", val: round2(q), z: S.L / 2 }], riks: { lamMax: 8, nsteps: 300, dl0: 0.05, dsRel: 2 }, imp: { kind: "none", eps: 1 } }; } },
+  ms_tors: { label: "Cantilever · tip torque", icon: "M8 4 L8 28 M8 8 l-5 4 M8 16 l-5 4 M8 24 l-5 4 M8 16 L80 16", load: "M84 8 A8 8 0 1 1 76 22 M76 22 l1 -5 M76 22 l5 -1",
+    make() { const G = S.sec.E / 2.6, T = 0.05 * G * (S.sum ? S.sum.J : 1) / S.L * 10; return { sup: [["incastro", 0]], loads: [{ k: "momento", dir: "Mz", pt: "G", val: round2(T), z: S.L }], riks: { lamMax: 10, nsteps: 300, dl0: 0.05, dsRel: 2 }, imp: { kind: "none", eps: 1 } }; } },
+};
+function round2(v) { const p = Math.pow(10, Math.floor(Math.log10(Math.abs(v))) - 1); return Math.round(v / p) * p; }
+function applyScheme(k) {
+  if (!S.sum) { setStatus("wait for the section analysis", "err"); return; }
+  const s = SCHEMES[k].make(); S.scheme = k; S.example = null;
+  S.supports = s.sup.map(([kind, z]) => ({ z: snapZ(z), kind, fix: preset(kind) }));
+  S.loads = s.loads.map((l) => ({ node: 0, wall: 0, mode: 0, ...l, z: snapZ(l.z) }));
+  S.riks = { ...s.riks }; S.imp = { ...s.imp }; S.selZ = S.supports[0].z; renderModel();
+}
+const EXAMPLES = {
+  t71: { lib: "rack23", L: 2000, ne: 80, steps: 245, pick: { node: 2, comp: "x" }, note: "Paper example 7.1 (paper Fig. 7.5; technical note Tables 1–2, Figs. 1–2): 80 elements, the converged mesh of the note. Monitored: X of node 3 at z = L; expected X = −69.0 mm at λ = 6 and −134.4 mm at λ = 8 (245 steps). With the 20 elements of the paper the branch beyond λ ≈ 7 is too stiff (−112 mm at λ = 8).", sup: [["incastro", 0]], loads: [{ k: "forza", dir: "-x", pt: "N", node: 5, val: 500, z: 2000 }, { k: "forza", dir: "-x", pt: "N", node: 9, val: 500, z: 2000 }], riks: { lamMax: 8, nsteps: 600, dl0: 0.05, dsRel: 1 } },
+  t72: { lib: "rack32", L: 600, ne: 160, steps: 141, pick: { node: 2, comp: "y" }, note: "Paper example 7.2 (paper Fig. 7.12; technical note Table 1): 160 elements, the converged mesh of the note (Y changes by 0.5% from 80 to 160). Monitored: Y of node 3 at z = L; expected Y = 30.1 mm at λ = 5 and 47.0 mm at λ = 9.5 (141 steps).", sup: [["incastro", 0]], loads: [{ k: "forza", dir: "+y", pt: "N", node: 2, val: 1000, z: 600 }, { k: "forza", dir: "-y", pt: "N", node: 12, val: 1000, z: 600 }], riks: { lamMax: 9.5, nsteps: 600, dl0: 0.05, dsRel: 1 } },
+  t73: { lib: "Z", L: 5000, ne: 50, steps: 73, pick: { node: 1, comp: "x" }, note: "Paper example 7.3 (paper Fig. 7.17; technical note Sec. 2): 50 elements, converged. Monitored: X of node 2 at z = L; expected 9.56 mm at λ = 1 and 34.9 mm at λ = 4 (73 steps). With the published data (F = 100 N, t = 2.3 mm) the stiffness agrees with Vlasov theory; the ADINA curves of the paper are not consistent with these data.", sup: [["incastro", 0]], loads: [{ k: "forza", dir: "-y", pt: "W", wall: 1, val: 100, z: 5000 }], riks: { lamMax: 4, nsteps: 600, dl0: 0.05, dsRel: 1 } },
+};
+function loadLib(id, keepModel = false) {
+  const l = LIB.find((x) => x.id === id); S.undo.push(S.sec.xy.map((p) => p.slice()));
+  S.sec = { ...S.sec, lib: id, xy: l.xy.map((p) => p.slice()), t: l.t }; S.sum = null; S.selNode = -1; svgView = null; S.res = null; S.stress.clear();
+  if (!keepModel) for (const ld of S.loads) { ld.node = Math.min(ld.node, l.xy.length - 1); ld.wall = Math.min(ld.wall, l.xy.length - 2); }
+  analyzeSection(0); renderSection(); if (S.tab === 2) renderModel();
+}
+function applyExample(k) {
+  const e = EXAMPLES[k]; loadLib(e.lib, true); S.sec.lib = e.lib; S.L = e.L; S.ne = e.ne; S.scheme = null;
+  S.supports = e.sup.map(([kind, z]) => ({ z, kind, fix: preset(kind) }));
+  S.loads = e.loads.map((l) => ({ node: 0, wall: 0, mode: 0, ...l }));
+  S.riks = { ...e.riks }; S.imp = { kind: "none", eps: 1 }; S.selZ = S.L; S.example = k;
+  renderSection(); setTab(2);
+}
+
+/* ---------- modals ---------- */
+let modal = null;
+function closeModal() { modal = null; $("modalRoot").innerHTML = ""; }
+function openSupModal() {
+  const ex = supAt(S.selZ);
+  modal = { type: "sup", z: S.selZ, kind: ex ? ex.kind : "libero", fix: JSON.parse(JSON.stringify(ex ? ex.fix : preset("libero"))), existed: !!ex };
+  renderModal();
+}
+function openLoadModal(k, idx = -1) {
+  const base = idx >= 0 ? { ...S.loads[idx] } : { k, z: S.selZ, dir: DIRS[k][k === "forza" || k === "distribuito" ? 3 : 0], pt: k === "forza" || k === "distribuito" ? "C" : "G", node: 0, wall: 0, mode: Math.min(4, S.sum ? S.sum.M - 1 : 0), val: defaultVal(k) };
+  if (k === "modale" && idx < 0) base.dir = "v";
+  modal = { type: "load", idx, l: base }; renderModal();
+}
+function defaultVal(k) { const s = S.sum; if (!s) return 1000; const N = round2(Math.PI ** 2 * S.sec.E * Imin() / S.L ** 2);
+  return { forza: round2(0.03 * S.sec.E * s.Ixx / S.L ** 2), assiale: N, distribuito: round2(0.03 * S.sec.E * s.Ixx / S.L ** 3), momento: round2(0.1 * S.sec.E * s.Ixx / S.L), bimomento: 1e5, modale: 100 }[k]; }
+function sectionPreview(l) {
+  const xy = S.sec.xy, g = secGeom(xy), [x0, y0, x1, y1] = g.bb, D = Math.max(x1 - x0, y1 - y0, 1), sc = 170 / (D * 1.5), cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  const T = (p) => [130 + (p[0] - cx) * sc, 120 - (p[1] - cy) * sc], ps = (p) => T(p).map((v) => v.toFixed(1)).join(",");
+  let s = `<svg viewBox="0 0 260 240" style="width:100%;max-width:340px;border:1px solid var(--line);border-radius:6px;background:#FAFAFA" role="img" aria-label="Section with point of application">`;
+  g.walls.forEach((w, k) => { const a = T(xy[w.a]), b = T(xy[w.c]), on = l.pt === "W" && l.wall === k;
+    s += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${on ? "#C2410C" : "#111827"}" stroke-width="${on ? 4 : 3}" stroke-linecap="round"/>`;
+    if (l.pt === "W") s += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="transparent" stroke-width="14" data-act="mWall" data-w="${k}" style="cursor:pointer"/>`; });
+  const canNode = (l.k === "forza" || l.k === "distribuito" || l.k === "assiale");
+  xy.forEach((p, i) => { const q = T(p), on = l.pt === "N" && l.node === i; s += `<circle cx="${q[0]}" cy="${q[1]}" r="${on ? 7 : 5}" fill="${on ? "#C2410C" : "#fff"}" stroke="#1D4ED8" stroke-width="1.5" ${canNode ? `data-act="mNode" data-i="${i}" style="cursor:pointer"` : ""}/>`; });
+  const mk = (p, c, t) => { const q = T(p); return `<g stroke="${c}" stroke-width="1.6"><line x1="${q[0] - 5}" y1="${q[1]}" x2="${q[0] + 5}" y2="${q[1]}"/><line x1="${q[0]}" y1="${q[1] - 5}" x2="${q[0]}" y2="${q[1] + 5}"/></g><text x="${q[0] + 6}" y="${q[1] + 12}" font-size="11" fill="${c}">${t}</text>`; };
+  s += mk(g.G, "#047857", "G"); if (S.sum && S.sum.sc) s += mk(S.sum.sc, "#7C3AED", "C");
+  const an = T(loadAnchor(l, xy, S.sum)), V = { "+x": [1, 0], "-x": [-1, 0], "+y": [0, 1], "-y": [0, -1] };
+  if ((l.k === "forza" || l.k === "distribuito") && V[l.dir]) { const v = V[l.dir].map((c) => c * (l.val < 0 ? -1 : 1)), tail = [an[0] - v[0] * 55, an[1] + v[1] * 55];
+    s += `<line x1="${tail[0]}" y1="${tail[1]}" x2="${an[0] - v[0] * 8}" y2="${an[1] + v[1] * 8}" stroke="#C2410C" stroke-width="2.5"/><path d="M${an[0]} ${an[1]} l${-v[0] * 10 - v[1] * 5} ${v[1] * 10 - v[0] * 5} l${v[1] * 10} ${v[0] * 10} Z" fill="#C2410C"/>`; }
+  if (l.k === "forza" && (l.dir === "+z" || l.dir === "-z") || l.k === "assiale") { const out = (l.dir === "+z" || l.dir === "traz") === (l.val >= 0); s += `<circle cx="${an[0]}" cy="${an[1]}" r="9" fill="none" stroke="#C2410C" stroke-width="2"/>` + (out ? `<circle cx="${an[0]}" cy="${an[1]}" r="2.5" fill="#C2410C"/>` : `<path d="M${an[0] - 5} ${an[1] - 5} L${an[0] + 5} ${an[1] + 5} M${an[0] + 5} ${an[1] - 5} L${an[0] - 5} ${an[1] + 5}" stroke="#C2410C" stroke-width="2"/>`); }
+  if (l.k === "modale" && S.sum) { const md = S.sum.modes[l.mode]; if (md && md.has_v && l.dir === "v") { let um = 0; for (let i = 0; i < xy.length; i++) um = Math.max(um, Math.hypot(md.x[2 * i], md.x[2 * i + 1])); s += `<polyline points="${modeShape(xy, md.x, 0.2 * D / (um || 1)).map(ps).join(" ")}" fill="none" stroke="#C2410C" stroke-width="2" stroke-dasharray="4 3"/>`; }
+    if (md && md.has_w && l.dir === "w") { const pm = Math.max(...md.phi.map(Math.abs)) || 1; xy.forEach((p, i) => { const q = T(p), v = md.phi[i] / pm; s += `<circle cx="${q[0]}" cy="${q[1]}" r="${(2 + 6 * Math.abs(v)).toFixed(1)}" fill="${v > 0 ? "#DC2626" : "#2563EB"}" opacity="0.6"/>`; }); } }
+  return s + `<text x="8" y="232" font-size="11" fill="#4B5563">${l.pt === "N" ? "click on a node to choose it" : l.pt === "W" ? "click on a wall (load at mid-wall)" : ""}</text></svg>`;
+}
+function renderModal() {
+  const root = $("modalRoot"); if (!modal) { root.innerHTML = ""; return; }
+  if (modal.type === "about") {
+    root.innerHTML = `<div class="modal-back" data-act="mBack"><div class="modal" role="dialog" aria-modal="true" aria-label="About" style="width:min(680px,100%)">
+      <div class="mh"><span class="t">GBT Studio ${VERSION}</span><div style="flex:1"></div><button class="btn sm" data-act="mClose">✕</button></div>
+      <div class="mb" style="flex-direction:column;gap:10px;font-size:13.5px;line-height:1.5">
+        <div>Geometrically nonlinear analysis of single thin-walled beams with the one-level GBT–ICM element of Ruggerini et al. [1] (mixed GBT element, per-wall corotational observers, exact rotator with closed-form derivatives) and the Riks arc-length method. The solver is a JavaScript port of the research code used in the technical note [2]; it reproduces the Python implementation to 10<sup>−9</sup> on 23 single-element cases and along the full paths of the three paper examples.</div>
+        <div class="h">References</div>
+        <div>[1] A.W. Ruggerini, A. Madeo, R. Gonçalves, D. Camotim, F. Ubertini, S. de Miranda, GBT post-buckling analysis based on the Implicit Corotational Method, <i>Int. J. Solids Struct.</i> 163 (2019) 40–60. <a href="https://doi.org/10.1016/j.ijsolstr.2018.12.011" target="_blank" rel="noopener">doi:10.1016/j.ijsolstr.2018.12.011</a></div>
+        <div>[2] GBT post-buckling with the Implicit Corotational Method: independent reproduction, role of the rotator, two-level and shell extensions. Technical note, extract of a longer report, November 2026. Tool page: <a href="${HOME_URL}" target="_blank" rel="noopener">${HOME_URL}</a></div>
+        <div class="h">What can be reproduced here</div>
+        <div>Sec. 2 of [2]: menu <b>Paper examples</b> → 7.1, 7.2, 7.3. Each preset sets section, mesh, supports, loads, Riks parameters and the monitored node exactly as in [2]; the expected values are shown in tab 2. Table 1 and Figs. 1–2 of [2]: presets as they are. Table 2 of [2]: preset 7.1 with 20, 40, 80, 160 elements. Run times in the browser differ from those of Table 2 (Python).</div>
+        <div>Not available here (research code only): the rotator variants and the imposed-rotation cantilever (Sec. 3, Table 3, Fig. 3), the two-level element and the frame (Sec. 4), shell macro-elements (Sec. 5) and hybrid members (Sec. 6). The tool analyses single members under proportional loads (no displacement control, no linear buckling analysis).</div>
+        <div class="h">Conventions</div>
+        <div>Units N, mm, MPa. Section nodes are numbered from 1 along the mid-line; x, y in the section plane, z along the axis (A at z = 0, B at z = L). Displacements in global components. Recovered stresses are elastic, membrane plus plate bending, at the mid-length of each element.</div>
+      </div>
+      <div class="mf"><button class="btn pri" data-act="mClose">Close</button></div></div></div>`;
+    return;
+  }
+  if (modal.type === "slow" || modal.type === "stop") {
+    let body, foot;
+    if (modal.type === "stop") {
+      const R = S.res, n = R ? R.steps.length - 1 : 0;
+      body = `<div>The analysis has been running for ${clock((performance.now() - R.t0) / 1000)}. If you stop it, the ${n} steps computed so far remain available; to continue, it must be restarted from the beginning.</div>`;
+      foot = `<button class="btn" data-act="mClose">Keep running</button><button class="btn danger" data-act="stopYes">■ Stop</button>`;
+    } else {
+      const e = modal.e, half = Math.max(1, Math.ceil(S.ne / 2)), eh = estimate(half);
+      body = `<div class="kv" style="max-width:420px"><span>Degrees of freedom</span><span>${e.ndof}</span><span>Elements</span><span>${S.ne} × ${fx(Le(), 1)} mm</span>
+          <span>Time per step</span><span>${fx(e.perStep, 1)} s</span><span>Steps</span><span>${e.known ? e.steps + " (as in the technical note)" : (e.steps >= e.stepsMax ? "up to " + e.stepsMax : "≈ " + e.steps + " (max " + e.stepsMax + ")")}</span>
+          <span><b>Estimated time</b></span><span><b>${e.known ? "" : "≈ "}${dur(e.total)}</b></span></div>
+        ${ENGINE === "inline" ? `<div class="note warn">This browser does not allow background computation: <b>the page will stay frozen until the end</b> and the analysis cannot be stopped (except by closing the tab). For long analyses open the file in Chrome, Firefox or Safari on a computer.</div>`
+          : `<div class="note">While it runs you can follow the deformed shape and the λ–u curve step by step and <b>stop at any time</b>: the steps already computed remain available. The model (tabs 1 and 2) is locked until the end or until you stop. Keep this tab open.</div>`}
+        ${S.example ? `<div class="muted">This example uses the converged mesh of the technical note: a coarser mesh changes the results.</div>` : ""}`;
+      foot = `<button class="btn" data-act="mClose" style="margin-right:auto">Cancel</button>${S.ne >= 4 && eh && S.L / half <= 60 ? `<button class="btn" data-act="slowCoarse" data-ne="${half}">Coarser mesh: ${half} elements (≈ ${dur(eh.total)})</button>` : ""}<button class="btn pri" data-act="slowGo">Start (≈ ${dur(e.total)})</button>`;
+    }
+    root.innerHTML = `<div class="modal-back" data-act="mBack"><div class="modal" role="dialog" aria-modal="true" style="width:min(560px,100%)">
+      <div class="mh"><span class="t">${modal.type === "stop" ? "Stop the analysis?" : "Long analysis"}</span><div style="flex:1"></div><button class="btn sm" data-act="mClose">✕</button></div>
+      <div class="mb" style="flex-direction:column;gap:10px">${body}</div><div class="mf">${foot}</div></div></div>`;
+    return;
+  }
+  if (modal.type === "sup") {
+    const sum = S.sum, cnt = (g) => sum ? sum.keys.filter((k) => k === g).length : 0;
+    const hasV = (g) => sum && sum.keys.some((k, m) => k === g && sum.modes[m].has_v), hasW = (g) => sum && sum.keys.some((k, m) => k === g && sum.modes[m].has_w);
+    root.innerHTML = `<div class="modal-back" data-act="mBack"><div class="modal" role="dialog" aria-modal="true" aria-label="Support">
+      <div class="mh"><span class="t">Support at section z = ${fx(modal.z, 1)} mm</span><div style="flex:1"></div><button class="btn sm" data-act="mClose">✕</button></div>
+      <div class="mb" style="flex-direction:column">
+        <div class="h">Start from a predefined support</div>
+        <div class="seg">${SUPK.map((k) => `<button class="${modal.kind === k ? "on" : ""}" data-act="mPreset" data-k="${k}">${NAMES[k]}</button>`).join("")}</div>
+        <div class="muted">${esc(SUPDESC[modal.kind] || "custom combination of restrained modes")}</div>
+        <div class="h">GBT modes restrained at this section</div>
+        <table class="fix"><tr><th style="text-align:left">Mode</th><th>no.</th><th>in-plane displacement<br>(amplitude)</th><th>warping<br>(out of plane)</th></tr>
+        ${GROUPS.map(([g, lab, num]) => `<tr><td>${lab}</td><td class="c mono">${cnt(g) || "—"}</td>
+          <td class="c">${hasV(g) ? `<input type="checkbox" data-chg="mFix" data-g="${g}" data-c="v" ${modal.fix[g].v ? "checked" : ""}>` : "—"}</td>
+          <td class="c">${hasW(g) ? `<input type="checkbox" data-chg="mFix" data-g="${g}" data-c="w" ${modal.fix[g].w ? "checked" : ""}>` : "—"}</td></tr>`).join("")}
+        </table>
+        <div class="note">Restraining the in-plane displacement of all modes is a section rigid in its plane (diaphragm); restraining all warping is a rigid end plate. Partial combinations are imposed on the modal amplitudes by a penalty constraint.</div>
+      </div>
+      <div class="mf">${modal.existed ? `<button class="btn danger" data-act="mRemoveSup" style="margin-right:auto">Remove support</button>` : ""}<button class="btn" data-act="mClose">Cancel</button><button class="btn pri" data-act="mSaveSup">Apply</button></div></div></div>`;
+  } else {
+    const l = modal.l, d = loadDesc(l);
+    const modeOpts = S.sum ? S.sum.modes.map((md, m) => `<option value="${m}" ${l.mode === m ? "selected" : ""}>${m + 1} · ${modeName(S.sum, m)}</option>`).join("") : "";
+    root.innerHTML = `<div class="modal-back" data-act="mBack"><div class="modal" role="dialog" aria-modal="true" aria-label="Load">
+      <div class="mh"><span class="t">${modal.idx >= 0 ? "Edit load" : "New load"}</span><span class="muted">${esc(d.s)}</span><div style="flex:1"></div><button class="btn sm" data-act="mClose">✕</button></div>
+      <div class="mb">
+        <div style="flex:1 1 300px;display:flex;flex-direction:column;gap:10px">
+          <div class="field">Type<div class="seg">${Object.keys(DIRS).map((k) => `<button class="${l.k === k ? "on" : ""}" data-act="mType" data-k="${k}">${NAMES[k]}</button>`).join("")}</div></div>
+          ${l.k === "modale" ? `<label class="field">GBT mode<select data-chg="mMode">${modeOpts}</select></label>` : ""}
+          <div class="field">${l.k === "modale" ? "Component" : "Direction"}<div class="seg">${DIRS[l.k].filter((dd) => l.k !== "modale" || !S.sum || (dd === "v" ? S.sum.modes[l.mode].has_v : S.sum.modes[l.mode].has_w)).map((dd) => `<button class="${l.dir === dd ? "on" : ""}" data-act="mDir" data-d="${dd}">${DLAB[dd]}</button>`).join("")}</div></div>
+          <div class="row"><label class="field">Value [${UNIT[l.k]}]<input type="number" step="any" value="${l.val}" data-chg="mVal"></label>
+            ${l.k === "distribuito" ? `<div class="field">Position<span class="muted" style="padding:7px 0">whole beam</span></div>` : `<label class="field">Section z [mm]<select data-chg="mZ">${Array.from({ length: S.ne + 1 }, (_, st) => `<option value="${stToZ(st)}" ${Math.abs(stToZ(st) - snapZ(l.z)) < 1e-6 ? "selected" : ""}>${fx(stToZ(st), 1)}${st === 0 ? " (A)" : st === S.ne ? " (B)" : st * 2 === S.ne ? " (L/2)" : ""}</option>`).join("")}</select></label>`}</div>
+          <div class="field">Point of application<div class="seg">${PTS[l.k].map(([k, lab]) => `<button class="${l.pt === k ? "on" : ""}" data-act="mPt" data-k="${k}">${lab}</button>`).join("")}</div></div>
+          <div class="muted">${l.k === "bimomento" ? "Generalized bimoment: nodal force on the warping amplitude of the torsion mode (GBT mode normalisation)." : l.k === "modale" ? "Generalized load on the amplitude of the chosen mode: useful for modal imperfections or to reproduce GBT load cases." : l.pt === "G" || l.pt === "C" ? "The force is spread over the section nodes as on a diaphragm (equivalent resultant and moment)." : l.pt === "W" ? "Force on the mid-line at mid-wall, distributed through the GBT mode fields (as in paper example 7.3)." : ""}</div>
+          <div class="muted">The load is multiplied by the load factor λ of the analysis.</div>
+        </div>
+        <div style="flex:1 1 240px;display:flex;flex-direction:column;gap:6px"><span class="muted">Preview in the section</span>${sectionPreview(l)}</div>
+      </div>
+      <div class="mf">${modal.idx >= 0 ? `<button class="btn danger" data-act="mRemoveLoad" style="margin-right:auto">Remove load</button>` : ""}<button class="btn" data-act="mClose">Cancel</button><button class="btn pri" data-act="mSaveLoad">Apply</button></div></div></div>`;
+  }
+}
+
+/* =============================== SOLVE =============================== */
+let solveW = null;
+function buildSpec() {
+  const loads = S.loads.map((l) => ({ ...l, st: zToSt(l.z) }));
+  if (S.imp.kind !== "none" && S.imp.eps > 0) {
+    let Pref = 0; for (const l of S.loads) Pref = Math.max(Pref, l.k === "distribuito" ? Math.abs(l.val) * S.L : l.k === "forza" || l.k === "assiale" ? Math.abs(l.val) : 0);
+    if (!Pref) for (const l of S.loads) if (l.k === "momento") Pref = Math.max(Pref, Math.abs(l.val) / Math.max(...secGeom(S.sec.xy).bb.map(Math.abs)));
+    const mag = S.imp.eps / 1000 * (Pref || 1), st = Math.round(S.ne / 2);
+    if (S.imp.kind === "t") loads.push({ k: "momento", dir: "Mz", pt: "G", val: mag * 100, st, z: stToZ(st), perturb: true });
+    else { let vec = S.imp.kind === "x" ? [1, 0, 0] : [0, 1, 0];
+      if (S.imp.kind === "auto" && S.sum) { const a = S.sum.Iyy, b = S.sum.Ixx, c = S.sum.Ixy, lam = (a + b) / 2 - Math.sqrt(((a - b) / 2) ** 2 + c * c); let v = Math.abs(c) > 1e-9 * (a + b) ? [lam - b, c] : a <= b ? [1, 0] : [0, 1]; const nv = Math.hypot(...v); vec = [v[0] / nv, v[1] / nv, 0]; }
+      loads.push({ k: "forza", dir: "vec", vec, pt: "G", val: mag, st, z: stToZ(st), perturb: true }); }
+  }
+  return { sec: secSpec(), L: S.L, ne: S.ne, supports: S.supports.map((s) => ({ st: zToSt(s.z), fix: s.fix, kind: s.kind, z: snapZ(s.z) })), loads, imp: { kind: "none" },
+    riks: { dl0: +S.riks.dl0, nsteps: +S.riks.nsteps | 0, lamMax: +S.riks.lamMax, dsMax: +S.riks.dl0 * +S.riks.dsRel } };
+}
+function solve() {   // entry point from the UI: warn before long runs
+  if (S.res && S.res.running) return;
+  const e = estimate();
+  if (e && (e.total > SLOW || (ENGINE === "inline" && e.total > 5))) { modal = { type: "slow", e }; renderModal(); return; }
+  startSolve();
+}
+function startSolve() {
+  if (solveW) solveW.terminate();
+  const spec = buildSpec();
+  S.res = { spec, sum: S.sum, xy: spec.sec.xy, steps: [{ lam: 0, d: new Float64Array((spec.ne + 1) * 3 * spec.sec.xy.length), neg: 0, its: 0, ms: 0 }], running: true, info: null, err: null, t0: performance.now() };
+  S.stress.clear(); S.view.step = 0; S.view.pick = null; S.view.userPick = false; S.view.follow = true;
+  if (S.example && EXAMPLES[S.example].pick) { const pk = EXAMPLES[S.example].pick; S.view.pick = { st: spec.ne, node: pk.node }; S.view.comp = pk.comp; S.view.userPick = true; spec.example = S.example; }
+  solveW = newWorker();
+  solveW.onmessage = (e) => {
+    const m = e.data, R = S.res; if (!R || R.spec !== spec) return;
+    if (m.type === "built") R.info = m;
+    else if (m.type === "step") { R.steps.push({ lam: m.lam, d: m.d, neg: m.neg, its: m.its, ms: m.ms }); if (!S.view.userPick) autoPick(); if (S.view.follow) S.view.step = R.steps.length - 1; }
+    else if (m.type === "done") { R.running = false; R.done = true; R.total = performance.now() - R.t0; solveW.terminate(); solveW = null; finished(); }
+    else if (m.type === "error") { R.running = false; R.err = m.message; R.total = performance.now() - R.t0; solveW.terminate(); solveW = null; finished(); }
+    scheduleResults();
+  };
+  solveW.onerror = (e) => { if (S.res) { S.res.running = false; S.res.err = e.message || "worker error"; } finished(); scheduleResults(); };
+  S.res.est = estimate(); S.res.ex = S.example && EXAMPLES[S.example];
+  document.body.classList.add("running");
+  setTab(3); renderBanner();
+  if (ENGINE === "inline") {   // the page freezes while computing: show a blocking notice and let it paint first
+    $("blocker") || document.body.insertAdjacentHTML("beforeend", `<div class="blocker" id="blocker"><div class="box"><div class="spin"></div><b>Computing</b><div class="muted">This browser does not allow background computation: the page stays frozen until the end${S.res.est ? ` (estimate ${dur(S.res.est.total)})` : ""}. For long analyses that can be stopped, open the file in Chrome, Firefox or Safari on a computer.</div></div></div>`);
+    requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => solveW && solveW.postMessage({ type: "solve", spec }), 30)));
+  } else solveW.postMessage({ type: "solve", spec });
+}
+function stopSolve() { if (solveW) { solveW.terminate(); solveW = null; } if (S.res && S.res.running) { S.res.running = false; S.res.stopped = true; S.res.total = performance.now() - S.res.t0; } finished(); renderResults(); }
+function askStop() {
+  const R = S.res; if (!R || !R.running) return;
+  if ((performance.now() - R.t0) / 1000 < 15) return stopSolve();
+  modal = { type: "stop" }; renderModal();
+}
+let wasRunning = false;
+function finished() {
+  document.body.classList.remove("running"); const b = $("blocker"); if (b) b.remove();
+  const R = S.res; if (!R) return;
+  const t = (R.total ?? (performance.now() - R.t0)) / 1000;
+  document.title = (R.err ? "⚠ " : R.stopped ? "■ " : "✓ ") + "GBT Studio";
+  if (t > 20) toast(R.err ? "Analysis ended with an error" : R.stopped ? `Analysis stopped after ${clock(t)} · ${R.steps.length - 1} steps available` : `Analysis completed in ${clock(t)} · ${R.steps.length - 1} steps`);
+}
+function toast(msg) { const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 6000); }
+function progressOf(R) {
+  const last = R.steps[R.steps.length - 1], el = (performance.now() - R.t0) / 1000, nst = R.steps.length - 1;
+  let p = R.spec.riks.lamMax > 0 ? Math.max(0, last.lam) / R.spec.riks.lamMax : 0;
+  if (R.ex) p = Math.max(p, nst / R.ex.steps); p = Math.min(0.999, Math.max(p, nst / R.spec.riks.nsteps));
+  let eta = null;
+  if (nst >= 3 && el > 3 && p > 0.01) eta = el * (1 - p) / p;
+  else if (R.est) eta = Math.max(0, R.est.total - el);
+  return { p, el, eta, last, nst };
+}
+function renderBanner() {
+  const R = S.res, b = $("runBanner");
+  if (!R || !R.running) { b.classList.add("hidden"); if (wasRunning) { wasRunning = false; } return; }
+  wasRunning = true;
+  const { p, el, eta, last, nst } = progressOf(R);
+  b.classList.remove("hidden");
+  b.innerHTML = `<div class="spin" aria-hidden="true"></div>
+    <div class="grow"><div><b>Analysis running</b> · step ${nst}${R.ex ? ` / ~${R.ex.steps}` : ` (max ${R.spec.riks.nsteps})`} · λ = ${fx(last.lam, 3)}${R.spec.riks.lamMax ? ` / ${R.spec.riks.lamMax}` : ""} · elapsed ${clock(el)}${eta !== null ? ` · remaining ≈ ${dur(eta)}` : ""}</div>
+    <div class="progress"><div style="width:${(100 * p).toFixed(1)}%"></div></div></div>
+    <span class="muted" style="color:#1E40AF">The model is locked until the analysis ends.</span>
+    ${S.tab !== 3 ? `<button class="btn sm" data-act="tab" data-t="3">Follow the results</button>` : ""}
+    <button class="btn sm danger" data-act="stop">■ Stop</button>`;
+  document.title = `(${Math.round(100 * p)}%) GBT Studio`;
+}
+setInterval(() => { if (S.res && S.res.running) renderBanner(); }, 1000);
+window.addEventListener("beforeunload", (e) => { if (S.res && S.res.running) { e.preventDefault(); e.returnValue = ""; } });
+let resRaf = 0; function scheduleResults() { if (resRaf) return; resRaf = requestAnimationFrame(() => { resRaf = 0; if (S.tab === 3) renderResults(); updateStatus(); renderBanner(); }); }
+function updateStatus() {
+  const R = S.res; if (!R) { setStatus("ready"); return; }
+  if (R.err) setStatus("error", "err"); else if (R.running) setStatus(`running… step ${R.steps.length - 1} · λ ${fx(R.steps[R.steps.length - 1].lam, 3)}`, "run");
+  else setStatus(`${R.stopped ? "stopped" : "completed"} · ${R.steps.length - 1} steps`, "ok");
+}
+function autoPick() {  // node with the largest displacement at the last step
+  const R = S.res, d = R.steps[R.steps.length - 1].d, n = R.xy.length; let best = null, bm = -1;
+  let tr = false; for (let i = 0; i < d.length; i += 3) if (Math.hypot(d[i], d[i + 1]) > 1e-9) { tr = true; break; }   // prefer transverse displacements
+  for (let st = 0; st <= R.spec.ne; st++) for (let i = 0; i < n; i++) { const o = (st * n + i) * 3, u = tr ? Math.hypot(d[o], d[o + 1]) : Math.abs(d[o + 2]); if (u > bm * (1 + 1e-9)) { bm = u; best = { st, node: i }; } }
+  if (bm > 0) { S.view.pick = best; const o = (best.st * n + best.node) * 3, a = [Math.abs(d[o]), Math.abs(d[o + 1]), Math.abs(d[o + 2])]; S.view.comp = ["x", "y", "z"][a.indexOf(Math.max(...a))]; }
+}
+
+/* =============================== TAB 3 =============================== */
+const cv3 = $("cv3");
+makeCam(cv3, "cam3", (x, y) => {
+  const R = S.res; if (!R) return; const { W, H } = fitCanvas(cv3), pr = projector(S.cam3, W, H, R.spec.L, R.xy), pos = resPos(); let best = null, bd = 25 * 25;
+  for (let st = 0; st <= R.spec.ne; st++) for (let i = 0; i < R.xy.length; i++) { const p = pr.P(...pos(st, i)), d = (p[0] - x) ** 2 + (p[1] - y) ** 2; if (d < bd) { bd = d; best = { st, node: i }; } }
+  if (best) { S.view.pick = best; S.view.userPick = true; renderResults(); }
+}, () => drawResults3D());
+function resPos(stepIdx) {
+  const R = S.res, k = stepIdx ?? S.view.step, d = R.steps[Math.min(k, R.steps.length - 1)].d, n = R.xy.length, Le_ = R.spec.L / R.spec.ne, f = S.view.scale;
+  return (st, i) => { const o = (st * n + i) * 3; return [R.xy[i][0] + f * d[o], R.xy[i][1] + f * d[o + 1], st * Le_ + f * d[o + 2]]; };
+}
+/* Deformed walls. Each station: rigid part (polar decomposition, corotational frame R, centroid c) + local part
+   u_loc = R^T (p - c) - (X - c0). Local in-plane field on each wall as in the GBT modes: Hermite cubic normal
+   displacement with node rotations theta = sum_m q_v,m x_m[2n+i], q = Ainv u_loc; linear tangential and warping. */
+function polar3(M) {
+  let R = M.map((r) => r.slice()); const nrm = Math.sqrt(R.flat().reduce((s, v) => s + v * v, 0)) || 1; R = R.map((r) => r.map((v) => v / nrm));
+  for (let it = 0; it < 30; it++) {
+    const [a, b, c] = R, det = a[0] * (b[1] * c[2] - b[2] * c[1]) - a[1] * (b[0] * c[2] - b[2] * c[0]) + a[2] * (b[0] * c[1] - b[1] * c[0]);
+    if (!(Math.abs(det) > 1e-14)) break;
+    const cof = [[b[1] * c[2] - b[2] * c[1], b[2] * c[0] - b[0] * c[2], b[0] * c[1] - b[1] * c[0]], [a[2] * c[1] - a[1] * c[2], a[0] * c[2] - a[2] * c[0], a[1] * c[0] - a[0] * c[1]], [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]];
+    let d = 0; const Rn = R.map((r, i) => r.map((v, j) => { const x = 0.5 * (v + cof[i][j] / det); d = Math.max(d, Math.abs(x - v)); return x; })); R = Rn; if (d < 1e-13) break;
+  }
+  return R;
+}
+function sectionOps(sum, xy) {
+  if (sum._ops) return sum._ops;
+  const n = xy.length, Th = Array.from({ length: n }, () => new Float64Array(3 * n));
+  sum.modes.forEach((md, m) => { const iv = sum.qidx[m][0]; if (iv === null) return; for (let i = 0; i < n; i++) { const xr = md.x[2 * n + i]; if (!xr) continue; const row = sum.Ainv[iv]; for (let j = 0; j < 3 * n; j++) Th[i][j] += xr * row[j]; } });
+  return (sum._ops = { Th, g: secGeom(xy) });
+}
+function stationFrames(R, k) {
+  R.frames = R.frames || new Map(); if (R.frames.has(k)) return R.frames.get(k);
+  const d = R.steps[k].d, xy = R.xy, n = xy.length, ne = R.spec.ne, Le = R.spec.L / ne, { Th, g } = sectionOps(R.sum, xy);
+  const bb = g.bb, D = Math.max(bb[2] - bb[0], bb[3] - bb[1]);
+  const cen = []; for (let st = 0; st <= ne; st++) { const c = [0, 0, 0]; for (let i = 0; i < n; i++) { const o = (st * n + i) * 3; c[0] += xy[i][0] + d[o]; c[1] += xy[i][1] + d[o + 1]; c[2] += st * Le + d[o + 2]; } cen.push(c.map((v) => v / n)); }
+  const c0 = [xy.reduce((s, p) => s + p[0], 0) / n, xy.reduce((s, p) => s + p[1], 0) / n];
+  const out = [];
+  for (let st = 0; st <= ne; st++) {
+    const c = cen[st], a = cen[Math.max(0, st - 1)], b = cen[Math.min(ne, st + 1)], t = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], tl = Math.hypot(...t) || 1;
+    const M = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];   // sum (p - c)(X - c0)^T  + axis tangent pair
+    for (let i = 0; i < n; i++) { const o = (st * n + i) * 3, pv = [xy[i][0] + d[o] - c[0], xy[i][1] + d[o + 1] - c[1], st * Le + d[o + 2] - c[2]], xv = [xy[i][0] - c0[0], xy[i][1] - c0[1], 0];
+      for (let r = 0; r < 3; r++) for (let q = 0; q < 3; q++) M[r][q] += pv[r] * xv[q]; }
+    for (let r = 0; r < 3; r++) M[r][2] += D * D * n * t[r] / tl;
+    const Rm = polar3(M), ul = new Float64Array(3 * n);
+    for (let i = 0; i < n; i++) { const o = (st * n + i) * 3, pv = [xy[i][0] + d[o] - c[0], xy[i][1] + d[o + 1] - c[1], st * Le + d[o + 2] - c[2]];
+      for (let q = 0; q < 3; q++) ul[3 * i + q] = Rm[0][q] * pv[0] + Rm[1][q] * pv[1] + Rm[2][q] * pv[2]; ul[3 * i] -= xy[i][0] - c0[0]; ul[3 * i + 1] -= xy[i][1] - c0[1]; }
+    const th = Th.map((row) => row.reduce((s, v, j) => s + v * ul[j], 0));
+    out.push({ R: Rm, c, ul, th });
+  }
+  R.frames.set(k, out); return out;
+}
+function resWallPos(stepIdx) {
+  const R = S.res, k = Math.min(stepIdx ?? S.view.step, R.steps.length - 1), f = S.view.scale, xy = R.xy, Le = R.spec.L / R.spec.ne;
+  const F = stationFrames(R, k), { g } = sectionOps(R.sum, xy), c0 = [xy.reduce((s, p) => s + p[0], 0) / xy.length, xy.reduce((s, p) => s + p[1], 0) / xy.length];
+  return (st, w, x) => {
+    const fr = F[st], W = g.walls[w], a = W.a, cc = W.c, ul = fr.ul, L = W.L;
+    const pa = W.nrm[0] * ul[3 * a] + W.nrm[1] * ul[3 * a + 1], pc = W.nrm[0] * ul[3 * cc] + W.nrm[1] * ul[3 * cc + 1];
+    const ma = W.tau[0] * ul[3 * a] + W.tau[1] * ul[3 * a + 1], mc = W.tau[0] * ul[3 * cc] + W.tau[1] * ul[3 * cc + 1];
+    const h = [1 - 3 * x * x + 2 * x ** 3, L * (x - 2 * x * x + x ** 3), 3 * x * x - 2 * x ** 3, L * (-x * x + x ** 3)];
+    const psi = h[0] * pa + h[1] * fr.th[a] + h[2] * pc + h[3] * fr.th[cc], mu = (1 - x) * ma + x * mc, wz = (1 - x) * ul[3 * a + 2] + x * ul[3 * cc + 2];
+    const bx = xy[a][0] + x * (xy[cc][0] - xy[a][0]), by = xy[a][1] + x * (xy[cc][1] - xy[a][1]);
+    const lv = [bx - c0[0] + psi * W.nrm[0] + mu * W.tau[0], by - c0[1] + psi * W.nrm[1] + mu * W.tau[1], wz], Rm = fr.R;
+    const P = [0, 1, 2].map((r) => fr.c[r] + Rm[r][0] * lv[0] + Rm[r][1] * lv[1] + Rm[r][2] * lv[2]), X0 = [bx, by, st * Le];
+    return [X0[0] + f * (P[0] - X0[0]), X0[1] + f * (P[1] - X0[1]), X0[2] + f * (P[2] - X0[2])];
+  };
+}
+let stressSeq = 0;
+function needStress() { return S.res && S.res.steps.length > 1 && (S.view.color !== "u" && S.view.color !== "none"); }
+async function fetchStress(k) {
+  const R = S.res; if (!R || S.stress.has(k) || k === 0) return;
+  const seq = ++stressSeq; S.stress.set(k, "pending");
+  try { const r = await STRW.call({ type: "stress", spec: { sec: R.spec.sec, L: R.spec.L, ne: R.spec.ne }, d: R.steps[k].d }); if (S.res === R) { S.stress.set(k, r); renderResults(); } }
+  catch (e) { S.stress.delete(k); }
+}
+function drawResults3D() {
+  const { ctx, W, H } = fitCanvas(cv3); ctx.clearRect(0, 0, W, H);
+  const R = S.res, leg = $("legend");
+  if (!R) { ctx.fillStyle = "#6B7280"; ctx.font = "14px system-ui"; ctx.fillText("No analysis yet: define supports and loads and press Solve.", 20, 30); leg.style.display = "none"; return; }
+  const xy = R.xy, n = xy.length, ns = R.spec.ne + 1, pr = projector(S.cam3, W, H, R.spec.L, xy), pos = resPos(), k = Math.min(S.view.step, R.steps.length - 1), d = R.steps[k].d;
+  if (S.view.showUndef) drawGhost(ctx, pr, ns, n, (st, i) => [xy[i][0], xy[i][1], st * R.spec.L / R.spec.ne]);
+  const nsubW = Math.max(2, Math.min(8, Math.floor(9000 / (R.spec.ne * (n - 1)))));
+  let opt = { nsub: nsubW }, legTxt = null;
+  const c = S.view.color;
+  if (c === "u") {
+    const um = (st, i) => { const o = (st * n + i) * 3; return Math.hypot(d[o], d[o + 1], d[o + 2]); };
+    let mx = 0; for (let st = 0; st < ns; st++) for (let i = 0; i < n; i++) mx = Math.max(mx, um(st, i));
+    opt = { nsub: nsubW, kind: "seq", range: [0, mx || 1], val: (j, w, x) => ((1 - x) * (um(j, w) + um(j + 1, w)) + x * (um(j, w + 1) + um(j + 1, w + 1))) / 2 };
+    legTxt = ["|u| [mm]", 0, mx, "seq"];
+  } else if (c !== "none") {
+    const sr = S.stress.get(k);
+    if (sr && sr !== "pending") {
+      const ci = { szz: 0, stop: 1, sbot: 2, vm: 3 }[c], F = sr.field, xs = sr.xs;
+      const at = (j, w, x) => { const a = F[j][w]; let q = Math.min(xs.length - 2, Math.floor(x * (xs.length - 1))); const t = (x - xs[q]) / (xs[q + 1] - xs[q]); return a[q][ci] + t * (a[q + 1][ci] - a[q][ci]); };
+      // stations -> element values: use the adjacent element (stresses at element mid-length)
+      let lo = Infinity, hi = -Infinity; for (const e of F) for (const w of e) for (const s of w) { lo = Math.min(lo, s[ci]); hi = Math.max(hi, s[ci]); }
+      const div = ci !== 3; if (div) { const m = Math.max(Math.abs(lo), Math.abs(hi)); lo = -m; hi = m; }
+      opt = { nsub: Math.max(4, nsubW), kind: div ? "div" : "seq", range: [lo, hi || 1], val: (j, w, x) => at(j, w, x) };
+      legTxt = [{ szz: "σzz membrane [MPa]", stop: "σzz face + [MPa]", sbot: "σzz face − [MPa]", vm: "σ von Mises [MPa]" }[c], lo, hi, div ? "div" : "seq"];
+    } else { fetchStress(k); legTxt = ["computing stresses…", null, null, null]; }
+  }
+  if (R.sum && R.sum.Ainv) { try { opt.wallPos = resWallPos(); } catch (e) { console.warn(e); } }
+  drawMember(ctx, pr, ns, n, pos, opt);
+  if (S.view.showBC) drawBC(ctx, pr, { L: R.spec.L, ne: R.spec.ne, supports: R.spec.supports, loads: R.spec.loads }, xy, R.sum, pos);
+  if (S.view.pick) { const p = pr.P(...pos(S.view.pick.st, S.view.pick.node)); ctx.fillStyle = "#fff"; ctx.strokeStyle = "#111827"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p[0], p[1], 6, 0, 7); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#111827"; ctx.font = "600 12px system-ui"; ctx.fillText(`node ${S.view.pick.node + 1} · z ${fx(S.view.pick.st * R.spec.L / R.spec.ne, 0)}`, p[0] + 9, p[1] - 8); }
+  if (legTxt) { leg.style.display = "";
+    if (legTxt[1] === null) leg.innerHTML = `<span>${legTxt[0]}</span>`;
+    else { const st = legTxt[3] === "div" ? [0, .25, .5, .75, 1] : [0, .25, .5, .75, 1]; leg.innerHTML = `<span>${legTxt[0]}</span><div class="ramp" style="background:linear-gradient(90deg,${st.map((t) => `rgb(${cmap(t, legTxt[3]).map((v) => v | 0).join(",")})`).join(",")})"></div><div class="ends"><span>${fmt(legTxt[1], 3)}</span>${legTxt[3] === "div" ? "<span>0</span>" : ""}<span>${fmt(legTxt[2], 3)}</span></div>`; }
+  } else leg.style.display = "none";
+}
+function niceTicks(a, b, n = 5) { if (!(b > a)) { b = a + 1; } const r = (b - a) / n, p = Math.pow(10, Math.floor(Math.log10(r))), s = [1, 2, 2.5, 5, 10].map((m) => m * p).find((m) => m >= r); const t = []; for (let v = Math.ceil(a / s) * s; v <= b + 1e-9 * s; v += s) t.push(+v.toPrecision(12)); return t; }
+function chart(cv, { series, xl, yl, marker, onPick, zeroLine }) {
+  const { ctx, W, H } = fitCanvas(cv); ctx.clearRect(0, 0, W, H);
+  const pts = series.flatMap((s) => s.pts); const l = 58, r = 12, t = 10, b = 36;
+  if (!pts.length) { ctx.fillStyle = "#9CA3AF"; ctx.font = "13px system-ui"; ctx.fillText("no data", l, t + 20); cv._pick = null; return; }
+  let x0 = Math.min(...pts.map((p) => p[0])), x1 = Math.max(...pts.map((p) => p[0])), y0 = Math.min(0, ...pts.map((p) => p[1])), y1 = Math.max(...pts.map((p) => p[1]));
+  if (x1 - x0 < 1e-12) { x0 -= 1; x1 += 1; } if (y1 - y0 < 1e-12) { y0 -= 1; y1 += 1; }
+  const xt = niceTicks(x0, x1), yt = niceTicks(y0, y1); x0 = Math.min(x0, xt[0]); x1 = Math.max(x1, xt[xt.length - 1]); y0 = Math.min(y0, yt[0]); y1 = Math.max(y1, yt[yt.length - 1]);
+  const X = (v) => l + (v - x0) / (x1 - x0) * (W - l - r), Y = (v) => H - b - (v - y0) / (y1 - y0) * (H - t - b);
+  ctx.font = "11px system-ui"; ctx.fillStyle = "#6B7280"; ctx.strokeStyle = "#F1F5F9"; ctx.lineWidth = 1;
+  for (const v of xt) { ctx.beginPath(); ctx.moveTo(X(v), t); ctx.lineTo(X(v), H - b); ctx.stroke(); ctx.textAlign = "center"; ctx.fillText(fmt(v, 3), X(v), H - b + 14); }
+  for (const v of yt) { ctx.beginPath(); ctx.moveTo(l, Y(v)); ctx.lineTo(W - r, Y(v)); ctx.stroke(); ctx.textAlign = "right"; ctx.fillText(fmt(v, 3), l - 6, Y(v) + 4); }
+  ctx.strokeStyle = "#9CA3AF"; ctx.beginPath(); ctx.moveTo(l, t); ctx.lineTo(l, H - b); ctx.lineTo(W - r, H - b); ctx.stroke();
+  if (zeroLine && y0 < 0 && y1 > 0) { ctx.strokeStyle = "#9CA3AF"; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(l, Y(0)); ctx.lineTo(W - r, Y(0)); ctx.stroke(); ctx.setLineDash([]); }
+  ctx.textAlign = "center"; ctx.fillStyle = "#374151"; ctx.fillText(xl, (l + W - r) / 2, H - 6);
+  ctx.save(); ctx.translate(12, (t + H - b) / 2); ctx.rotate(-Math.PI / 2); ctx.fillText(yl, 0, 0); ctx.restore(); ctx.textAlign = "start";
+  for (const s of series) { ctx.strokeStyle = s.color; ctx.lineWidth = s.w || 2; ctx.beginPath(); s.pts.forEach((p, i) => (i ? ctx.lineTo(X(p[0]), Y(p[1])) : ctx.moveTo(X(p[0]), Y(p[1])))); ctx.stroke();
+    if (s.dots) { ctx.fillStyle = s.color; for (const p of s.pts) { ctx.beginPath(); ctx.arc(X(p[0]), Y(p[1]), 2, 0, 7); ctx.fill(); } }
+    if (s.flags) { for (const [p, c] of s.flags) { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(X(p[0]), Y(p[1]), 2.4, 0, 7); ctx.fill(); } } }
+  if (marker) { ctx.fillStyle = "#fff"; ctx.strokeStyle = "#111827"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X(marker[0]), Y(marker[1]), 5, 0, 7); ctx.fill(); ctx.stroke(); }
+  cv._pick = onPick ? (px, py) => { let best = -1, bd = 1e18; series[0].pts.forEach((p, i) => { const dd = (X(p[0]) - px) ** 2 + (Y(p[1]) - py) ** 2; if (dd < bd) { bd = dd; best = i; } }); if (best >= 0) onPick(best); } : null;
+}
+for (const id of ["cvLam", "cvGen"]) $(id).addEventListener("click", (e) => { const cv = e.currentTarget, r = cv.getBoundingClientRect(); if (cv._pick) cv._pick(e.clientX - r.left, e.clientY - r.top); });
+function renderResults() {
+  const R = S.res;
+  $("runBox").innerHTML = !R ? `<div class="note">No analysis yet.</div><button class="btn" data-act="tab" data-t="2">← Supports and loads</button>` : (() => {
+    const last = R.steps[R.steps.length - 1], frac = Math.min(1, R.spec.riks.lamMax ? Math.abs(last.lam) / R.spec.riks.lamMax : 0);
+    let h = `<div class="kv"><span>Degrees of freedom</span><span>${R.info ? `${R.info.ndof} (${R.info.nfree} free)` : "…"}</span><span>Elements</span><span>${R.spec.ne} × ${fx(R.spec.L / R.spec.ne, 1)} mm</span>
+      <span>Steps</span><span>${R.steps.length - 1}</span><span>λ reached</span><span>${fx(last.lam, 4)}</span><span>Time</span><span>${clock((R.total ?? (performance.now() - R.t0)) / 1000)}</span>
+      <span>Negative pivots</span><span>${last.neg}</span></div>`;
+    if (R.running && ENGINE === "inline") h += `<div class="note warn">Running in the page (the browser does not allow Web Workers): the interface updates at the end.</div>`;
+    if (R.running) { const pg = progressOf(R); h += `<div class="progress" style="margin-top:6px"><div style="width:${(100 * pg.p).toFixed(1)}%"></div></div><div class="muted">elapsed ${clock(pg.el)}${pg.eta !== null ? ` · remaining ≈ ${dur(pg.eta)}` : ""}. Steps appear as they are computed: you can already explore them.</div><button class="btn danger" data-act="stop">■ Stop</button>`; }
+    if (R.err) h += `<div class="note err">${esc(R.err)}</div>`;
+    if (!R.running && !R.err) h += `<div class="note ${R.stopped ? "warn" : "ok"}">${R.stopped ? "Analysis stopped: the computed steps remain available." : last.lam >= R.spec.riks.lamMax - 1e-9 ? "λ max reached." : R.steps.length - 1 >= R.spec.riks.nsteps ? "Maximum number of steps reached." : "Analysis ended (minimum step size reached: possible limit point or loss of convergence)."}</div>`;
+    if (last.neg > 0) h += `<div class="note warn">Negative pivots = ${last.neg}: the current configuration is unstable (beyond a limit point or a bifurcation).</div>`;
+    h += `<button class="btn" data-act="tab" data-t="2">← Edit the model</button>`;
+    return h;
+  })();
+  const sr = $("stepRange");
+  if (!R) { sr.max = 0; $("stepKv").innerHTML = ""; drawResults3D(); chart($("cvLam"), { series: [], xl: "", yl: "" }); chart($("cvGen"), { series: [], xl: "", yl: "" }); return; }
+  const k = Math.min(S.view.step, R.steps.length - 1), st = R.steps[k];
+  sr.max = R.steps.length - 1; sr.value = k; $("follow").checked = S.view.follow;
+  $("stepKv").innerHTML = `<span>step</span><span>${k} / ${R.steps.length - 1}</span><span>λ</span><span>${fx(st.lam, 5)}</span><span>iterations</span><span>${st.its}</span><span>negative pivots</span><span>${st.neg}</span>`;
+  $("scaleLab").textContent = `× ${scaleVal().toPrecision(3)}`; $("colorSel").value = S.view.color; $("showBC").checked = S.view.showBC; $("showUndef").checked = S.view.showUndef;
+  $("scaleQuick").innerHTML = [0, 1, 5, 20, 100].map((v) => `<button class="${Math.abs(scaleVal() - v) < 1e-9 ? "on" : ""}" data-act="scale" data-v="${v}">×${v}</button>`).join("");
+  $("resTitle").textContent = `Deformed shape 3D · step ${k} · λ = ${fx(st.lam, 4)}`;
+  $("resInfo").textContent = S.view.scale === 1 ? "true scale" : `displacements × ${scaleVal().toPrecision(3)}`;
+  drawResults3D();
+  // λ–u chart
+  $("compSeg").innerHTML = [["x", "X"], ["y", "Y"], ["z", "Z"], ["m", "|u|"]].map(([c, lab]) => `<button class="${S.view.comp === c ? "on" : ""}" data-act="comp" data-c="${c}">${lab}</button>`).join("");
+  const pk = S.view.pick, n = R.xy.length;
+  if (pk) {
+    const o = (pk.st * n + pk.node) * 3, ci = { x: 0, y: 1, z: 2 }[S.view.comp];
+    const u = (s) => ci === undefined ? Math.hypot(s.d[o], s.d[o + 1], s.d[o + 2]) : s.d[o + ci];
+    $("pickLab").textContent = `node ${pk.node + 1} · z = ${fx(pk.st * R.spec.L / R.spec.ne, 1)} mm · u${S.view.comp === "m" ? "" : S.view.comp.toUpperCase()} = ${fx(u(st), 4)} mm`;
+    const pts = R.steps.map((s) => [u(s), s.lam]);
+    chart($("cvLam"), { series: [{ pts, color: "#1D4ED8", w: 2, flags: R.steps.map((s, i) => s.neg > 0 ? [pts[i], "#DC2626"] : null).filter(Boolean) }], xl: `u${S.view.comp === "m" ? "" : S.view.comp.toUpperCase()} [mm]`, yl: "λ", marker: [u(st), st.lam], onPick: (i) => { S.view.step = i; S.view.follow = false; renderResults(); } });
+  } else { $("pickLab").textContent = "click on a node of the deformed shape"; chart($("cvLam"), { series: [], xl: "", yl: "" }); }
+  // generalized stresses
+  const sum = R.sum, gm = $("genMode");
+  if (sum && gm.options.length !== sum.M) gm.innerHTML = sum.modes.map((m, i) => `<option value="${i}">${i + 1} · ${modeName(sum, i)}</option>`).join("");
+  gm.value = S.view.genMode;
+  const comps = { axial: [1], bend: [1, 3], tors: [1, 2, 3], high: [0, 1, 2, 3] }[sum.modes[S.view.genMode].group];
+  if (!comps.includes(S.view.genComp)) S.view.genComp = comps.includes(1) ? 1 : comps[0];
+  const gc = $("genComp"); gc.innerHTML = comps.map((c) => `<option value="${c}">${COMPNAME[c]}</option>`).join(""); gc.value = S.view.genComp;
+  const sres = S.stress.get(k);
+  if (k === 0) chart($("cvGen"), { series: [], xl: "", yl: "" });
+  else if (!sres || sres === "pending") { fetchStress(k); chart($("cvGen"), { series: [], xl: "z [mm]", yl: "" }); $("genNote").textContent = "computing…"; }
+  else {
+    const ai = sres.act.indexOf(4 * S.view.genMode + S.view.genComp), Le_ = R.spec.L / R.spec.ne;
+    const pts = sres.gen.map((g, j) => [(j + 0.5) * Le_, g[ai]]);
+    chart($("cvGen"), { series: [{ pts, color: "#C2410C", w: 2, dots: R.spec.ne <= 60 }], xl: "z [mm]", yl: `mode ${S.view.genMode + 1} · ${COMPNAME[S.view.genComp]}`, zeroLine: true });
+    $("genNote").textContent = `Values at the mid-length of each element (hybrid stress field of the element). Mode 1, normal component = axial force N [N]; for the other modes the units depend on the mode normalisation.`;
+  }
+}
+const scaleVal = () => S.view.scale;
+
+/* =============================== EVENTS =============================== */
+function setTab(t) {
+  S.tab = t; for (const i of [1, 2, 3]) { $("tab" + i).classList.toggle("on", i === t); $("nav" + i).classList.toggle("on", i === t); }
+  if (t === 1) { renderSection(); } if (t === 2) renderModel(); if (t === 3) renderResults();
+}
+const ACT = {
+  about: () => { modal = { type: "about" }; renderModal(); },
+  tab: (d) => setTab(+d.t),
+  lib: (d) => { loadLib(d.id); },
+  addEnd: (d) => { const xy = S.sec.xy, e = +d.e, a = e ? xy[xy.length - 1] : xy[0], b = e ? xy[xy.length - 2] : xy[1], v = [a[0] - b[0], a[1] - b[1]], L = Math.hypot(...v) || 1, len = Math.max(10, 0.3 * L);
+    S.undo.push(xy.map((p) => p.slice())); const p = [Math.round((a[0] + v[0] / L * len) / S.snap) * S.snap, Math.round((a[1] + v[1] / L * len) / S.snap) * S.snap];
+    if (e) { xy.push(p); S.selNode = xy.length - 1; } else { xy.unshift(p); S.selNode = 0; shiftNodeRefs(0, 1); } svgView = null; sectionChanged(); },
+  delNode: () => deleteNode(),
+  undo: () => { if (!S.undo.length) return; S.sec.xy = S.undo.pop(); S.selNode = -1; S.sec.lib = null; svgView = null; sectionChanged(); },
+  allModes: () => { S.allModes = !S.allModes; renderSectionSide(); },
+  selz: (d) => { S.selZ = snapZ(+d.z); renderModel(); },
+  scheme: (d) => applyScheme(d.k),
+  sup: (d) => { S.supports = S.supports.filter((s) => Math.abs(s.z - S.selZ) > 1e-6); if (d.k !== "libero") S.supports.push({ z: S.selZ, kind: d.k, fix: preset(d.k) }); S.scheme = null; S.example = null; renderModel(); },
+  supModal: () => openSupModal(),
+  newLoad: (d) => openLoadModal(d.k),
+  editLoad: (d) => openLoadModal(S.loads[+d.i].k, +d.i),
+  delLoad: (d) => { S.loads.splice(+d.i, 1); S.scheme = null; S.example = null; renderModel(); },
+  delSup: (d) => { S.supports = S.supports.filter((s) => Math.abs(s.z - +d.z) > 1e-6); S.scheme = null; S.example = null; renderModel(); },
+  solve: () => solve(),
+  stop: () => askStop(),
+  slowGo: () => { closeModal(); startSolve(); },
+  slowCoarse: (d) => { S.ne = +d.ne; S.example = null; for (const s of S.supports) s.z = snapZ(s.z); for (const l of S.loads) l.z = snapZ(l.z); closeModal(); renderModel(); startSolve(); },
+  stopYes: () => { closeModal(); stopSolve(); },
+  comp: (d) => { S.view.comp = d.c; S.view.userPick = true; renderResults(); },
+  scale: (d) => { S.view.scale = +d.v; $("scaleRange").value = scaleToRange(+d.v); renderResults(); },
+  csv: () => { const R = S.res; if (!R || !S.view.pick) return; const n = R.xy.length, o = (S.view.pick.st * n + S.view.pick.node) * 3;
+    const txt = "step;lambda;ux;uy;uz;neg\n" + R.steps.map((s, i) => [i, s.lam, s.d[o], s.d[o + 1], s.d[o + 2], s.neg].join(";")).join("\n");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([txt], { type: "text/csv" })); a.download = `lambda_u_nodo${S.view.pick.node + 1}_z${Math.round(S.view.pick.st * R.spec.L / R.spec.ne)}.csv`; a.click(); },
+  // modal
+  mBack: (d, el, e) => { if (e.target === el) closeModal(); },
+  mClose: () => closeModal(),
+  mPreset: (d) => { modal.kind = d.k; modal.fix = preset(d.k); renderModal(); },
+  mSaveSup: () => { S.supports = S.supports.filter((s) => Math.abs(s.z - modal.z) > 1e-6); const any = GROUPS.some(([g]) => modal.fix[g].v || modal.fix[g].w);
+    if (any) S.supports.push({ z: modal.z, kind: modal.kind === "libero" ? "personalizzato" : modal.kind, fix: modal.fix }); S.scheme = null; S.example = null; closeModal(); renderModel(); },
+  mRemoveSup: () => { S.supports = S.supports.filter((s) => Math.abs(s.z - modal.z) > 1e-6); closeModal(); renderModel(); },
+  mType: (d) => { const l = modal.l, k = d.k; modal.l = { ...l, k, dir: DIRS[k].includes(l.dir) ? l.dir : DIRS[k][k === "forza" || k === "distribuito" ? 3 : 0], pt: PTS[k].some((p) => p[0] === l.pt) ? l.pt : PTS[k][0][0], val: defaultVal(k) };
+    if (k === "modale") modal.l.dir = S.sum && S.sum.modes[l.mode].has_v ? "v" : "w"; renderModal(); },
+  mDir: (d) => { modal.l.dir = d.d; renderModal(); },
+  mPt: (d) => { modal.l.pt = d.k; renderModal(); },
+  mNode: (d) => { modal.l.pt = "N"; modal.l.node = +d.i; renderModal(); },
+  mWall: (d) => { modal.l.wall = +d.w; renderModal(); },
+  mSaveLoad: () => { const l = { ...modal.l }; if (!isFinite(+l.val) || +l.val === 0) { alert("Enter a non-zero value."); return; } l.val = +l.val; if (l.k !== "distribuito") l.z = snapZ(l.z);
+    if (modal.idx >= 0) S.loads[modal.idx] = l; else S.loads.push(l); S.scheme = null; S.example = null; closeModal(); renderModel(); },
+  mRemoveLoad: () => { S.loads.splice(modal.idx, 1); closeModal(); renderModel(); },
+};
+const CHG = {
+  example: (el) => { if (el.value) applyExample(el.value); el.value = ""; },
+  secnum: (el) => { const v = +el.value; if (!isFinite(v)) return; S.sec[el.dataset.k] = v; sectionChanged(); },
+  node: (el) => { const v = +el.value.replace(",", "."); if (!isFinite(v)) { renderSection(); return; } S.undo.push(S.sec.xy.map((p) => p.slice())); S.sec.xy[+el.dataset.i][+el.dataset.c] = v; S.selNode = +el.dataset.i; svgView = null; sectionChanged(); },
+  snap: (el) => { S.snap = +el.value; },
+  beam: (el) => { const v = +el.value; if (!(v > 0)) return renderModel(); if (el.dataset.k === "ne") S.ne = Math.max(1, Math.min(400, Math.round(v))); else { const r = v / S.L; S.L = v; for (const s of S.supports) s.z *= r; for (const l of S.loads) l.z *= r; S.selZ *= r; }
+    S.example = null; for (const s of S.supports) s.z = snapZ(s.z); for (const l of S.loads) l.z = snapZ(l.z); renderModel(); },
+  riks: (el) => { const v = +el.value; if (v > 0) S.riks[el.dataset.k] = v; S.example = null; renderModel(); },
+  imp: (el) => { S.imp[el.dataset.k] = el.dataset.k === "kind" ? el.value : Math.max(0, +el.value || 0); renderModel(); },
+  follow: (el) => { S.view.follow = el.checked; if (el.checked && S.res) S.view.step = S.res.steps.length - 1; renderResults(); },
+  color: (el) => { S.view.color = el.value; renderResults(); },
+  showBC: (el) => { S.view.showBC = el.checked; drawResults3D(); },
+  showUndef: (el) => { S.view.showUndef = el.checked; drawResults3D(); },
+  genMode: (el) => { S.view.genMode = +el.value; renderResults(); },
+  genComp: (el) => { S.view.genComp = +el.value; renderResults(); },
+  mFix: (el) => { modal.fix[el.dataset.g][el.dataset.c] = el.checked; modal.kind = "personalizzato"; for (const k of SUPK) if (JSON.stringify(preset(k)) === JSON.stringify(modal.fix)) modal.kind = k; renderModal(); },
+  mVal: (el) => { modal.l.val = el.value; },
+  mZ: (el) => { modal.l.z = +el.value; },
+  mMode: (el) => { modal.l.mode = +el.value; const md = S.sum.modes[modal.l.mode]; if (modal.l.dir === "v" && !md.has_v) modal.l.dir = "w"; if (modal.l.dir === "w" && !md.has_w) modal.l.dir = "v"; renderModal(); },
+};
+const INP = {
+  zrange: (el) => { S.selZ = stToZ(+el.value); renderModel(); },
+  step: (el) => { S.view.step = +el.value; S.view.follow = S.res && S.view.step === S.res.steps.length - 1; renderResults(); },
+  scale: (el) => { S.view.scale = rangeToScale(+el.value); renderResults(); },
+};
+const rangeToScale = (r) => (r <= 0.02 ? 0 : +Math.pow(10, r - 1).toPrecision(3));
+const scaleToRange = (s) => (s <= 0 ? 0 : Math.max(0.03, Math.min(3, 1 + Math.log10(s))));
+function deleteNode() {
+  const i = S.selNode; if (i < 0 || S.sec.xy.length <= 4) return;
+  S.undo.push(S.sec.xy.map((p) => p.slice())); S.sec.xy.splice(i, 1); S.selNode = -1;
+  for (const l of S.loads) { if (l.node > i) l.node--; else if (l.node === i) l.node = Math.max(0, i - 1); if (l.wall >= i && l.wall > 0) l.wall--; }
+  sectionChanged();
+}
+document.addEventListener("click", (e) => { const el = e.target.closest("[data-act]"); if (!el) return; const f = ACT[el.dataset.act]; if (f) f(el.dataset, el, e); });
+const lockedEl = (el) => document.body.classList.contains("running") && el.closest("#tab1,#tab2,#exsel");
+document.addEventListener("change", (e) => { const el = e.target.closest("[data-chg]"); if (!el) return; if (lockedEl(el)) { if (el.id === "exsel") el.value = ""; toast("Model locked: stop the analysis to edit it."); if (S.tab === 1) renderSection(); if (S.tab === 2) renderModel(); return; } const f = CHG[el.dataset.chg]; if (f) f(el); });
+document.addEventListener("input", (e) => { const el = e.target.closest("[data-inp]"); if (!el) return; if (lockedEl(el)) return; const f = INP[el.dataset.inp]; if (f) f(el); });
+document.addEventListener("keydown", (e) => {
+  if (e.target.matches("input,select,textarea")) return;
+  if (document.body.classList.contains("running") && S.tab !== 3) return;
+  if (e.key === "Escape" && modal) closeModal();
+  if (S.tab === 1 && (e.key === "Delete" || e.key === "Backspace")) { e.preventDefault(); deleteNode(); }
+  if (S.tab === 1 && e.key === "z" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); ACT.undo(); }
+  if (S.tab === 3 && S.res && (e.key === "ArrowLeft" || e.key === "ArrowRight")) { S.view.step = Math.max(0, Math.min(S.res.steps.length - 1, S.view.step + (e.key === "ArrowRight" ? 1 : -1))); S.view.follow = false; renderResults(); }
+});
+window.addEventListener("resize", () => { if (S.tab === 1) drawSvg(); if (S.tab === 2) drawModel3D(); if (S.tab === 3) renderResults(); });
+
+// ---------- start ----------
+(async function init() {
+  setTab(1);
+  setStatus("starting the solver…", "run");
+  try {
+    ENGINE = (await probeWorker()) ? "worker" : "inline";
+    SECW = rpcWorker(); STRW = rpcWorker();
+    setStatus(ENGINE === "worker" ? "ready" : "ready · no worker", ENGINE === "worker" ? "" : "ok");
+    $("status").title = ENGINE === "worker" ? "Solver running in a Web Worker" : "The browser does not allow Web Workers here: the solver runs in the page, which stays frozen during the analysis.";
+  } catch (e) { S.secErr = "Cannot start the solver: " + e.message; setStatus("error", "err"); renderSectionSide(); return; }
+  analyzeSection(0);
+  // default model once the section is known
+  const wait = () => new Promise((r) => { const f = () => (S.sum || S.secErr ? r() : setTimeout(f, 50)); f(); });
+  await wait(); if (S.sum && !S.supports.length) { applyScheme("pp_punta"); }
+  window.GBT = { S, solve, setTab, applyExample, applyScheme, resWallPos };   // console / test hook
+})();
+</script>
+</body>
+</html>
